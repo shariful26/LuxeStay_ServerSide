@@ -1,0 +1,97 @@
+[
+  {
+    "id": "rev_1",
+    "hotelId": "h1",
+    "hotelName": "Oceana Luxe Resort",
+    "guestName": "Jaylon Dorwart",
+    "guestCountry": "United States of America",
+    "rating": 4.8,
+    "categories": {
+      "facilities": 4.6,
+      "cleanliness": 4.8,
+      "services": 4.8,
+      "comfort": 5,
+      "food": 4.5
+    },
+    "comment": "Absolutely stunning views and top-notch hospitality. The infinity pool overlooking the caldera is breathtaking. Cleanliness was immaculate.",
+    "createdAt": "2028-06-18T10:00:00.000Z",
+    "status": "Positive",
+    "reply": "Thank you"
+  },
+  {
+    "id": "rev_2",
+    "hotelId": "h1",
+    "hotelName": "Oceana Luxe Resort",
+    "guestName": "Xian Wang",
+    "guestCountry": "China",
+    "rating": 4.5,
+    "categories": {
+      "facilities": 4.2,
+      "cleanliness": 4.4,
+      "services": 4.5,
+      "comfort": 4.8,
+      "food": 4.6
+    },
+    "comment": "Great stay, very friendly staff. Loved the modern room amenities. Food was very delicious.",
+    "createdAt": "2028-06-17T09:30:00.000Z",
+    "status": "Positive",
+    "reply": "Thank you Xian! We are thrilled to hear you loved our dining options. Hope to see you again soon."
+  },
+  {
+    "id": "rev_3",
+    "hotelId": "h1",
+    "hotelName": "Oceana Luxe Resort",
+    "guestName": "David Smith",
+    "guestCountry": "United Kingdom",
+    "rating": 3.8,
+    "categories": {
+      "facilities": 4,
+      "cleanliness": 3.8,
+      "services": 4,
+      "comfort": 4.2,
+      "food": 3.5
+    },
+    "comment": "Nice location but the restaurant service was a bit slow during breakfast rush. The rooms are spacious though.",
+    "createdAt": "2028-06-16T14:20:00.000Z",
+    "status": "Negative",
+    "reply": ""
+  },
+  {
+    "id": "rev_4",
+    "hotelId": "h1",
+    "hotelName": "Oceana Luxe Resort",
+    "guestName": "Lieke de Jong",
+    "guestCountry": "Netherlands",
+    "rating": 4.7,
+    "categories": {
+      "facilities": 4.8,
+      "cleanliness": 4.7,
+      "services": 4.8,
+      "comfort": 4.6,
+      "food": 4.5
+    },
+    "comment": "Wonderful weekend getaway. The caldera views are unmatched. Service is quick and extremely polite.",
+    "createdAt": "2028-06-15T11:05:00.000Z",
+    "status": "Positive",
+    "reply": ""
+  },
+  {
+    "id": "rev_5",
+    "hotelId": "h1",
+    "hotelName": "Oceana Luxe Resort",
+    "guestName": "Sophia Al-Mutairi",
+    "guestCountry": "Saudi Arabia",
+    "rating": 4.9,
+    "categories": {
+      "facilities": 5,
+      "cleanliness": 4.9,
+      "services": 4.8,
+      "comfort": 5,
+      "food": 4.8
+    },
+    "comment": "An absolute luxury paradise. Very respectful staff, beautiful sunset view, private pool was excellent.",
+    "createdAt": "2028-06-13T16:45:00.000Z",
+    "status": "Positive",
+    "reply": "Thank you Sophia! It was a pleasure hosting you."
+  }
+]

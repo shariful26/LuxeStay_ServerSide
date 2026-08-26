@@ -1,0 +1,29 @@
+[
+  {
+    "id": "REQ-001",
+    "guestName": "Johan Manulang",
+    "roomNumber": "Room 101",
+    "requestType": "Airport Pick-up Shuttle",
+    "scheduledTime": "Today, 6:30 PM",
+    "assignedStaff": "Bebe W. Cullen",
+    "status": "Pending"
+  },
+  {
+    "id": "REQ-002",
+    "guestName": "Isla de Lacosta",
+    "roomNumber": "Room 302",
+    "requestType": "Laundry & Ironing Service",
+    "scheduledTime": "Tomorrow, 10:00 AM",
+    "assignedStaff": "Alwar King",
+    "status": "In Progress"
+  },
+  {
+    "id": "REQ-003",
+    "guestName": "Xian Wang",
+    "roomNumber": "Room 204",
+    "requestType": "Santorini Sunset Sailing Tour",
+    "scheduledTime": "28 Aug, 4:00 PM",
+    "assignedStaff": "Suzi Matsuda",
+    "status": "Completed"
+  }
+]

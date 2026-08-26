@@ -1,0 +1,54 @@
+[
+  {
+    "id": "TR-33987",
+    "partnerId": "u2",
+    "partnerName": "Aura Hospitality",
+    "amount": 1842,
+    "destinationType": "Mobile Banking (bKash/Nagad)",
+    "accountName": "Aura Hospitality",
+    "accountNumber": "+880 1700-123456 (bKash Personal)",
+    "provider": "bKash Mobile Money",
+    "status": "Dispatched & Completed",
+    "referenceCode": "TXN-38444141",
+    "createdAt": "2026-08-22T22:40:44.141Z"
+  },
+  {
+    "id": "TR-84460",
+    "partnerId": "u2",
+    "partnerName": "Aura Hospitality",
+    "amount": 1757,
+    "destinationType": "Mobile Banking (bKash/Nagad)",
+    "accountName": "Aura Hospitality",
+    "accountNumber": "+88001871126026 /bkash/personal",
+    "provider": "Bkash",
+    "status": "Dispatched & Completed",
+    "referenceCode": "TXN-36558200",
+    "createdAt": "2026-08-22T22:09:18.200Z"
+  },
+  {
+    "id": "TR-89421",
+    "partnerId": "u_1786134647659",
+    "partnerName": "shariful",
+    "amount": 1000,
+    "destinationType": "Personal Bank Account",
+    "accountName": "Shariful Islam Personal",
+    "accountNumber": "150-101-987654",
+    "provider": "Dutch Bangla Bank Ltd (DBBL)",
+    "status": "Dispatched & Completed",
+    "referenceCode": "DBBL-TXN-99881122",
+    "createdAt": "2026-08-22T14:30:00Z"
+  },
+  {
+    "id": "TR-89422",
+    "partnerId": "u_1786134647659",
+    "partnerName": "shariful",
+    "amount": 500,
+    "destinationType": "Mobile Banking (bKash/Nagad)",
+    "accountName": "Shariful Islam",
+    "accountNumber": "+880 1700-123456 (bKash Personal)",
+    "provider": "bKash Mobile Money",
+    "status": "Dispatched & Completed",
+    "referenceCode": "BKASH-TXN-773344",
+    "createdAt": "2026-08-23T02:15:00Z"
+  }
+]

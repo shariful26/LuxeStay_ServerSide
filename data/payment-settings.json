@@ -1,0 +1,31 @@
+{
+  "mode": "test",
+  "gateways": {
+    "stripe": {
+      "enabled": true,
+      "livePk": "PLACEHOLDER_LIVE_PUBLIC_KEY",
+      "liveSk": "PLACEHOLDER_LIVE_SECRET_KEY",
+      "testPk": "PLACEHOLDER_TEST_PUBLIC_KEY",
+      "testSk": "PLACEHOLDER_TEST_SECRET_KEY"
+    },
+    "paypal": {
+      "enabled": true,
+      "clientId": "",
+      "clientSecret": ""
+    },
+    "razorpay": {
+      "enabled": true,
+      "keyId": "",
+      "keySecret": ""
+    },
+    "payoneer": {
+      "enabled": true,
+      "merchantId": "",
+      "apiToken": ""
+    },
+    "pay_at_hotel": {
+      "enabled": true
+    }
+  },
+  "updatedAt": "2026-08-25T18:26:31.396Z"
+}

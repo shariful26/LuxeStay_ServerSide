@@ -1,0 +1,38 @@
+[
+  {
+    "id": "b1",
+    "slug": "top-10-overwater-villas-in-maldives",
+    "title": "Top 10 Overwater Bungalows & Villas in Maldives for 2026",
+    "author": "Elena Rostova",
+    "date": "August 4, 2026",
+    "category": "Travel Guide",
+    "image": "https://images.unsplash.com/photo-1439066615861-d1af74d74000?auto=format&fit=crop&w=800&q=80",
+    "readTime": "6 min read",
+    "summary": "Discover pristine glass-floor overwater sanctuaries featuring private sunset plunge pools, underwater dining, and personal butler service.",
+    "content": "The Maldives remains the undisputed capital of luxury overwater living. From private lagoon villas equipped with outdoor rainfall showers to glass-bottom lounge viewing portals where rays and exotic fish glide under your bed, we review the top 10 sanctuaries..."
+  },
+  {
+    "id": "b2",
+    "slug": "guide-to-santorini-sunset-suites",
+    "title": "An Insider's Guide to Santorini’s Most Exclusive Cliffside Suites",
+    "author": "Julian Vance",
+    "date": "July 28, 2026",
+    "category": "Luxury Destinations",
+    "image": "https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?auto=format&fit=crop&w=800&q=80",
+    "readTime": "5 min read",
+    "summary": "Avoid the tourist crowds with these secret white-washed infinity pool suites tucked high in Oia and Imerovigli cliffs.",
+    "content": "Santorini’s caldera view is world-famous for a reason. But securing a private heated infinity pool terrace away from street foot traffic requires inside knowledge..."
+  },
+  {
+    "id": "b3",
+    "slug": "authentic-ryokan-etiquette-japan",
+    "title": "The Art of Japanese Hospitality: What to Expect at a Traditional Ryokan",
+    "author": "Kenji Takahashi",
+    "date": "July 15, 2026",
+    "category": "Culture & Wellness",
+    "image": "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&w=800&q=80",
+    "readTime": "7 min read",
+    "summary": "Everything you need to know about Tatami mats, Kaiseki multicourse dining, Yukata attire, and Onsen hot spring customs.",
+    "content": "Staying at a luxury Ryokan in Kyoto is more than accommodation—it is a spiritual journey into Omotenashi (selfless Japanese hospitality)..."
+  }
+]

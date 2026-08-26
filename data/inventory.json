@@ -1,0 +1,50 @@
+[
+  {
+    "id": "inv_1",
+    "name": "Bath Towels",
+    "category": "Refreshments",
+    "availability": "Available",
+    "stock": 120,
+    "reorderLimit": 50
+  },
+  {
+    "id": "inv_2",
+    "name": "Shampoo Bottles",
+    "category": "Toiletries",
+    "availability": "Low",
+    "stock": 20,
+    "reorderLimit": 100
+  },
+  {
+    "id": "inv_3",
+    "name": "Coffee Pods",
+    "category": "Refreshments",
+    "availability": "Out of Stock",
+    "stock": 0,
+    "reorderLimit": 200
+  },
+  {
+    "id": "inv_4",
+    "name": "Room Key Cards",
+    "category": "Electronics",
+    "availability": "Available",
+    "stock": 500,
+    "reorderLimit": 100
+  },
+  {
+    "id": "inv_5",
+    "name": "Cleaning Supplies",
+    "category": "Housekeeping",
+    "availability": "Available",
+    "stock": 300,
+    "reorderLimit": 50
+  },
+  {
+    "id": "inv_6",
+    "name": "Mini Bar Snacks",
+    "category": "Refreshments",
+    "availability": "Low",
+    "stock": 15,
+    "reorderLimit": 50
+  }
+]

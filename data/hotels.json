@@ -1,0 +1,311 @@
+[
+  {
+    "id": "h1787678113540",
+    "name": "Fast Test Hotel",
+    "slug": "fast-test-hotel",
+    "destination": "Santorini, Greece",
+    "destinationSlug": "santorini",
+    "category": "Resort & Spa",
+    "pricePerNight": 450,
+    "rating": 5,
+    "reviewCount": 0,
+    "starRating": 5,
+    "featured": false,
+    "partnerId": "p1",
+    "partnerEmail": "",
+    "partnerName": "Aura Hospitality",
+    "status": "Approved",
+    "description": "Exclusive luxury hotel property with world-class hospitality.",
+    "address": "Oia Cliffside, Santorini, Greece",
+    "images": [
+      "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "amenities": [
+      "Infinity Pool",
+      "Private Beach",
+      "Luxury Spa",
+      "Free Wi-Fi",
+      "Butler Service"
+    ]
+  },
+  {
+    "id": "h1787677822176",
+    "name": "Hotel Sheraton",
+    "slug": "hotel-sheraton",
+    "destination": "Santorini, Greece",
+    "destinationSlug": "santorini-greece",
+    "category": "Resort & Spa",
+    "pricePerNight": 505,
+    "rating": 5,
+    "reviewCount": 0,
+    "starRating": 5,
+    "featured": false,
+    "partnerId": "u_1786134647659",
+    "partnerEmail": "shariful@gmail.com",
+    "partnerName": "shariful",
+    "status": "Approved",
+    "description": "Step directly into turquoise waters from your private villa deck. Complete with glass-floor viewing portals, private infinity plunge pools, and bespoke marine biologist tours.",
+    "address": "Oia Cliffside, Santorini, Greece",
+    "images": [
+      "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "amenities": [
+      "Infinity Pool",
+      "Private Beach",
+      "Luxury Spa",
+      "Free Wi-Fi",
+      "Butler Service"
+    ]
+  },
+  {
+    "id": "h1787677770339",
+    "name": "Relux Zone",
+    "slug": "relux-zone",
+    "destination": "United States, Greece",
+    "destinationSlug": "united-states-greece",
+    "category": "Resort & Spa",
+    "pricePerNight": 410,
+    "rating": 5,
+    "reviewCount": 0,
+    "starRating": 5,
+    "featured": false,
+    "partnerId": "u_1786134647659",
+    "partnerEmail": "shariful@gmail.com",
+    "partnerName": "shariful",
+    "status": "Pending Approval",
+    "description": "Step directly into turquoise waters from your private villa deck. Complete with glass-floor viewing portals, private infinity plunge pools, and bespoke marine biologist tours.",
+    "address": "Oia Cliffside, Santorini, Greece",
+    "images": [
+      "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "amenities": [
+      "Infinity Pool",
+      "Private Beach",
+      "Luxury Spa",
+      "Free Wi-Fi",
+      "Butler Service"
+    ]
+  },
+  {
+    "id": "h1787671273762",
+    "name": "Hotel Oceania",
+    "slug": "hotel-oceania",
+    "destination": "Santorini, Greece",
+    "destinationSlug": "santorini-greece",
+    "category": "Resort & Spa",
+    "pricePerNight": 670,
+    "rating": 5,
+    "reviewCount": 0,
+    "starRating": 5,
+    "featured": false,
+    "partnerId": "u_1787619856938",
+    "partnerEmail": "sharif@gmail.com",
+    "partnerName": "sharif",
+    "status": "Pending Approval",
+    "description": "Perched on the dramatic cliffs of Oia overlooking the Aegean Sea, The Grand Azure Resort delivers an unmatched sanctuary of sun-drenched infinity pools, private volcanic-stone hot tubs, and world-",
+    "address": "Oia Cliffside, Santorini, Greece",
+    "images": [
+      "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "amenities": [
+      "Infinity Pool",
+      "Private Beach",
+      "Luxury Spa",
+      "Free Wi-Fi",
+      "Butler Service"
+    ]
+  },
+  {
+    "id": "h1",
+    "name": "The Grand Azure Resort & Spa",
+    "slug": "grand-azure-resort",
+    "tagline": "Ultra-Luxury Waterfront Retreat",
+    "destination": "Santorini, Greece",
+    "destinationSlug": "santorini",
+    "address": "Oia Cliffside Drive, Santorini 84702, Greece",
+    "pricePerNight": 450,
+    "rating": 4.95,
+    "reviewCount": 128,
+    "starRating": 5,
+    "featured": true,
+    "category": "Resort & Spa",
+    "images": [
+      "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "amenities": [
+      "Infinity Pool",
+      "Private Beach",
+      "Luxury Spa",
+      "Michelin Dining",
+      "Free Wi-Fi",
+      "Airport Shuttle",
+      "24/7 Butler"
+    ],
+    "description": "Perched on the dramatic cliffs of Oia overlooking the Aegean Sea, The Grand Azure Resort delivers an unmatched sanctuary of sun-drenched infinity pools, private volcanic-stone hot tubs, and world-class Mediterranean gastronomy.",
+    "partnerId": "u_1787619856938",
+    "partnerName": "sharif",
+    "status": "active",
+    "partnerEmail": "sharif@gmail.com"
+  },
+  {
+    "id": "h2",
+    "name": "Overwater Coral Sanctuary",
+    "slug": "overwater-coral-sanctuary",
+    "tagline": "Private Lagoon Overwater Bungalows",
+    "destination": "Maldives",
+    "destinationSlug": "maldives",
+    "address": "Baa Atoll Biosphere Reserve, Maldives",
+    "pricePerNight": 890,
+    "rating": 4.98,
+    "reviewCount": 94,
+    "starRating": 5,
+    "featured": true,
+    "category": "Overwater Villa",
+    "images": [
+      "https://images.unsplash.com/photo-1439066615861-d1af74d74000?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1573843981267-be1999ff37cd?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "amenities": [
+      "Glass Floor Views",
+      "Private Ocean Deck",
+      "Underwater Restaurant",
+      "Scuba Center",
+      "Spa & Wellness",
+      "Free Wifi"
+    ],
+    "description": "Step directly into turquoise waters from your private villa deck. Complete with glass-floor viewing portals, private infinity plunge pools, and bespoke marine biologist tours.",
+    "partnerId": "u_1787619856938",
+    "partnerName": "sharif",
+    "status": "active",
+    "partnerEmail": "sharif@gmail.com"
+  },
+  {
+    "id": "h3",
+    "name": "The Ritz Horizon Tower",
+    "slug": "ritz-horizon-tower",
+    "tagline": "Skyline Luxury in Downtown Manhattan",
+    "destination": "New York, USA",
+    "destinationSlug": "new-york",
+    "address": "750 5th Avenue, New York, NY 10019",
+    "pricePerNight": 520,
+    "rating": 4.88,
+    "reviewCount": 310,
+    "starRating": 5,
+    "featured": true,
+    "category": "City Luxury Hotel",
+    "images": [
+      "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "amenities": [
+      "Rooftop Lounge",
+      "Fitness Center",
+      "Valet Parking",
+      "Pet Friendly",
+      "Executive Lounge",
+      "High Speed Wifi"
+    ],
+    "description": "Towering above Fifth Avenue with breathtaking panoramic views of Central Park, The Ritz Horizon merges timeless Manhattan elegance with state-of-the-art modern amenities.",
+    "partnerId": "u_1787619856938",
+    "partnerName": "sharif",
+    "status": "active",
+    "partnerEmail": "sharif@gmail.com"
+  },
+  {
+    "id": "h4",
+    "name": "Kyoto Bamboo Zen Sanctuary",
+    "slug": "kyoto-bamboo-zen",
+    "tagline": "Traditional Ryokan with Private Onsen",
+    "destination": "Kyoto, Japan",
+    "destinationSlug": "kyoto",
+    "address": "Arashiyama Bamboo Grove Walk, Kyoto 616-8385",
+    "pricePerNight": 380,
+    "rating": 4.92,
+    "reviewCount": 165,
+    "starRating": 5,
+    "featured": false,
+    "category": "Boutique Ryokan",
+    "images": [
+      "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "amenities": [
+      "Private Hot Spring (Onsen)",
+      "Kaiseki Tasting Menu",
+      "Zen Garden",
+      "Tea Ceremony Room",
+      "Free Wi-Fi"
+    ],
+    "description": "Immerse yourself in authentic Japanese hospitality surrounded by whispering bamboo forests. Features natural hot spring mineral baths and seasonal Michelin-worthy Kaiseki dining.",
+    "partnerId": "u_1787619856938",
+    "partnerName": "sharif",
+    "status": "active",
+    "partnerEmail": "sharif@gmail.com"
+  },
+  {
+    "id": "h5",
+    "name": "Alpine Chalet & Thermal Spa",
+    "slug": "alpine-chalet-spa",
+    "tagline": "Mountain Peak Ski-In / Ski-Out Haven",
+    "destination": "Swiss Alps, Switzerland",
+    "destinationSlug": "swiss-alps",
+    "address": "Matterhorn Valley Road 12, Zermatt 3920",
+    "pricePerNight": 640,
+    "rating": 4.96,
+    "reviewCount": 88,
+    "starRating": 5,
+    "featured": false,
+    "category": "Ski Resort",
+    "images": [
+      "https://images.unsplash.com/photo-1502784444187-359ac186c5bb?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1548625361-186a5120612c?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "amenities": [
+      "Ski-In/Ski-Out",
+      "Heated Outdoor Pool",
+      "Fireplace Lounge",
+      "Sauna & Sauna Master",
+      "Free Ski Lockers"
+    ],
+    "description": "Nestled under the shadow of the Matterhorn, this luxury wooden chalet features roaring open fireplaces, heated outdoor thermal pools, and direct access to pristine ski slopes.",
+    "partnerId": "u_1787619856938",
+    "partnerName": "sharif",
+    "status": "active",
+    "partnerEmail": "sharif@gmail.com"
+  },
+  {
+    "id": "h6",
+    "name": "Ubud Rainforest Eco Manor",
+    "slug": "ubud-rainforest-manor",
+    "tagline": "Lush Tropical Wellness & Yoga Estate",
+    "destination": "Bali, Indonesia",
+    "destinationSlug": "bali",
+    "address": "Tegallalang Rice Terrace Pass, Ubud 80561",
+    "pricePerNight": 290,
+    "rating": 4.89,
+    "reviewCount": 210,
+    "starRating": 4,
+    "featured": true,
+    "category": "Eco Wellness Resort",
+    "images": [
+      "https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "amenities": [
+      "Jungle Infinity Pool",
+      "Daily Yoga Shala",
+      "Organic Farm Restaurant",
+      "Holistic Spa",
+      "Free Bikes"
+    ],
+    "description": "Wake up to misty green jungle valleys and river cascades. Complete with daily sunrise yoga, organic farm-to-table cuisine, and holistic Ayurvedic spa therapies.",
+    "partnerId": "u_1787619856938",
+    "partnerName": "sharif",
+    "status": "active",
+    "partnerEmail": "sharif@gmail.com"
+  }
+]

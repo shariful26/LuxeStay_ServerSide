@@ -1,0 +1,63 @@
+[
+  {
+    "id": "msg1",
+    "senderId": "alice",
+    "senderName": "Alice Johnson",
+    "senderRole": "customer",
+    "recipientId": "partner1",
+    "recipientName": "Shariful Islam",
+    "text": "Hi, can I request a late check-out for Room 101?",
+    "time": "9:15 AM"
+  },
+  {
+    "id": "msg2",
+    "senderId": "partner1",
+    "senderName": "Shariful Islam",
+    "senderRole": "partner",
+    "recipientId": "alice",
+    "recipientName": "Alice Johnson",
+    "text": "Hi Alice, we can accommodate a late check-out for you. How late would you like to stay?",
+    "time": "9:30 AM"
+  },
+  {
+    "id": "msg3",
+    "senderId": "alice",
+    "senderName": "Alice Johnson",
+    "senderRole": "customer",
+    "recipientId": "partner1",
+    "recipientName": "Shariful Islam",
+    "text": "I was hoping to stay until 2 PM, is that possible?",
+    "time": "9:40 AM"
+  },
+  {
+    "id": "msg4",
+    "senderId": "partner1",
+    "senderName": "Shariful Islam",
+    "senderRole": "partner",
+    "recipientId": "alice",
+    "recipientName": "Alice Johnson",
+    "text": "Yes, that is perfectly fine. We have updated your checkout window to 2 PM at no extra cost.",
+    "time": "9:45 AM"
+  },
+  {
+    "id": "msg5",
+    "senderId": "alice",
+    "senderName": "Alice Johnson",
+    "senderRole": "customer",
+    "recipientId": "partner1",
+    "recipientName": "Shariful Islam",
+    "text": "Awesome! Thank you so much for the quick response. See you tomorrow.",
+    "time": "9:50 AM"
+  },
+  {
+    "id": "msg-1787695324164-549",
+    "senderId": "u_1786134647659",
+    "senderName": "shariful",
+    "senderRole": "partner",
+    "recipientId": "michael",
+    "recipientName": "Michael Brown",
+    "text": "hello ",
+    "time": "04:02 AM",
+    "createdAt": "2026-08-25T22:02:04.164Z"
+  }
+]

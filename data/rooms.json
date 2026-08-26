@@ -1,0 +1,321 @@
+[
+  {
+    "id": "r1787697539249",
+    "hotelId": "h1787677822176",
+    "name": "Sheraton beach",
+    "slug": "sheraton-beach",
+    "type": "Suite Room",
+    "price": 450,
+    "size": "75 m² / 807 sq ft",
+    "capacity": 2,
+    "bedType": "1 King Bed",
+    "view": "Panoramic Sea & Caldera View",
+    "images": [
+      "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "amenities": [
+      "Private Heated Pool",
+      "Balcony Lounge",
+      "Espresso Machine",
+      "Marble Bath",
+      "Smart TV"
+    ],
+    "inclusions": {
+      "freeCancellation": true,
+      "breakfastIncluded": true,
+      "instantVoucher": true
+    },
+    "description": "\tbooking, bootstrap, car, car rental, destination, flight, flight booking, hotel, hotel booking, listing, nextjs, property, react, rental, Typescript & Javascript",
+    "status": "Available",
+    "housekeepingStatus": "Needs Cleaning",
+    "housekeepingPriority": "High",
+    "housekeepingNotes": ""
+  },
+  {
+    "id": "r1787694480102",
+    "hotelId": "h1787677822176",
+    "name": "OCEANA ROOM",
+    "slug": "oceana-room",
+    "type": "Deluxe Room",
+    "price": 450,
+    "size": "75 m² / 807 sq ft",
+    "capacity": 3,
+    "bedType": "2 King Bed",
+    "view": "Panoramic Sea & Caldera View",
+    "images": [
+      "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "amenities": [
+      "Private Heated Pool",
+      "Balcony Lounge",
+      "Espresso Machine",
+      "Marble Bath",
+      "Smart TV"
+    ],
+    "inclusions": {
+      "freeCancellation": true,
+      "breakfastIncluded": true,
+      "instantVoucher": true
+    },
+    "description": "implement this screen and please follow the formatting and design as closely as you can. Pay attention to the colors, the typography, the icons, the layout, and really small details like shadows,",
+    "status": "Available"
+  },
+  {
+    "id": "r1787677993894",
+    "hotelId": "h1",
+    "name": "Night Zone",
+    "slug": "night-zone",
+    "type": "Deluxe Room",
+    "price": 423,
+    "size": "75 m² / 807 sq ft",
+    "capacity": 2,
+    "bedType": "1 King Bed",
+    "view": "Panoramic Sea & Caldera View",
+    "images": [
+      "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "amenities": [
+      "Private Heated Pool",
+      "Balcony Lounge",
+      "Espresso Machine",
+      "Marble Bath",
+      "Smart TV"
+    ],
+    "inclusions": {
+      "freeCancellation": true,
+      "breakfastIncluded": true,
+      "instantVoucher": true
+    },
+    "description": "Step directly into turquoise waters from your private villa deck. Complete with glass-floor viewing portals, private infinity plunge pools, and bespoke marine biologist tours.",
+    "status": "Available"
+  },
+  {
+    "id": "r1787677964458",
+    "hotelId": "h1",
+    "name": "Relax Oceana",
+    "slug": "relax-oceana",
+    "type": "Presidential Suite",
+    "price": 450,
+    "size": "75 m² / 807 sq ft",
+    "capacity": 4,
+    "bedType": "2 King Bed",
+    "view": "Panoramic Sea & Caldera View",
+    "images": [
+      "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "amenities": [
+      "Private Heated Pool",
+      "Balcony Lounge",
+      "Espresso Machine",
+      "Marble Bath",
+      "Smart TV"
+    ],
+    "inclusions": {
+      "freeCancellation": true,
+      "breakfastIncluded": true,
+      "instantVoucher": true
+    },
+    "description": "Step directly into turquoise waters from your private villa deck. Complete with glass-floor viewing portals, private infinity plunge pools, and bespoke marine biologist tours.",
+    "status": "Available"
+  },
+  {
+    "id": "r1787432242935",
+    "hotelId": "h1",
+    "name": "Ocean Oceana",
+    "slug": "ocean-oceana",
+    "type": "Deluxe Room",
+    "price": 320,
+    "size": "75 m² / 807 sq ft",
+    "capacity": 2,
+    "bedType": "1 King Bed",
+    "view": "Panoramic Sea & Caldera View",
+    "images": [
+      "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "amenities": [
+      "Private Heated Pool",
+      "Balcony Lounge",
+      "Espresso Machine",
+      "Marble Bath",
+      "Smart TV"
+    ],
+    "description": "best quality resort it. so you can enjoy your tours.\n",
+    "status": "Available",
+    "partnerId": "u_1787619856938",
+    "partnerEmail": "sharif@gmail.com",
+    "partnerName": "sharif",
+    "housekeepingStatus": "Cleaning in Progress",
+    "housekeepingPriority": "Medium",
+    "housekeepingNotes": ""
+  },
+  {
+    "id": "r101",
+    "hotelId": "h1",
+    "name": "Deluxe Aegean Sunset Villa",
+    "slug": "deluxe-aegean-sunset-villa",
+    "type": "Villa",
+    "price": 450,
+    "size": "75 m² / 807 sq ft",
+    "capacity": 2,
+    "bedType": "1 King Bed",
+    "view": "Panoramic Aegean Sea & Caldera",
+    "images": [
+      "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "amenities": [
+      "Private Heated Plunge Pool",
+      "Balcony Lounge",
+      "Espresso Machine",
+      "Marble Bath",
+      "Smart TV",
+      "Mini Bar"
+    ],
+    "description": "Perched high on the volcanic cliffs, this white-washed villa features a private heated plunge pool facing the famed Oia sunset, plush king bed with Egyptian cotton sheets, and marble bathroom.",
+    "status": "Available",
+    "partnerId": "u_1787619856938",
+    "partnerEmail": "sharif@gmail.com",
+    "partnerName": "sharif"
+  },
+  {
+    "id": "r102",
+    "hotelId": "h1",
+    "name": "Caldera Master Presidential Suite",
+    "slug": "caldera-master-presidential-suite",
+    "type": "Presidential Suite",
+    "price": 850,
+    "size": "140 m² / 1500 sq ft",
+    "capacity": 4,
+    "bedType": "2 King Beds",
+    "view": "Full Caldera & Sunset Deck",
+    "images": [
+      "https://images.unsplash.com/photo-1578683010236-d716f9a3f461?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1618773928121-c32242e63f39?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "amenities": [
+      "Infinity Private Pool",
+      "24/7 Butler Service",
+      "Private Champagne Bar",
+      "Jacuzzi",
+      "Helipad Access"
+    ],
+    "description": "The peak of Greek luxury. Includes two master king suites, expansive private sun terrace, glass-walled infinity pool, and dedicated personal butler.",
+    "status": "Available",
+    "partnerId": "u_1787619856938",
+    "partnerEmail": "sharif@gmail.com",
+    "partnerName": "sharif"
+  },
+  {
+    "id": "r201",
+    "hotelId": "h2",
+    "name": "Overwater Sunset Plunge Pool Villa",
+    "slug": "overwater-sunset-plunge-pool-villa",
+    "type": "Overwater Villa",
+    "price": 890,
+    "size": "110 m² / 1184 sq ft",
+    "capacity": 2,
+    "bedType": "1 Super King Bed",
+    "view": "Direct Ocean & Coral Lagoon",
+    "images": [
+      "https://images.unsplash.com/photo-1439066615861-d1af74d74000?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1573843981267-be1999ff37cd?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "amenities": [
+      "Direct Ocean Access Stairs",
+      "Glass Bedside Floor Window",
+      "Infinity Plunge Pool",
+      "Outdoor Rainfall Shower"
+    ],
+    "description": "Floating directly over the vibrant coral reef. Gaze at bioluminescent marine life through indoor glass floor panels or step right down into the sea from your sundeck.",
+    "status": "Available",
+    "partnerId": "u_1787619856938",
+    "partnerEmail": "sharif@gmail.com",
+    "partnerName": "sharif",
+    "housekeepingStatus": "Ready",
+    "housekeepingPriority": "Low",
+    "housekeepingNotes": ""
+  },
+  {
+    "id": "r301",
+    "hotelId": "h3",
+    "name": "Central Park Skyline Suite",
+    "slug": "central-park-skyline-suite",
+    "type": "Luxury Suite",
+    "price": 520,
+    "size": "85 m² / 914 sq ft",
+    "capacity": 2,
+    "bedType": "1 King Bed",
+    "view": "Central Park & Manhattan Skyline",
+    "images": [
+      "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "amenities": [
+      "Floor-to-Ceiling Windows",
+      "Deep Soaking Tub",
+      "Bose Sound System",
+      "Work Desk",
+      "Nespresso Bar"
+    ],
+    "description": "Panoramic corner suite overlooking Central Park's changing seasons. Offers state-of-the-art home automation, oversized marble bath, and custom cocktail bar.",
+    "status": "Available",
+    "partnerId": "u_1787619856938",
+    "partnerEmail": "sharif@gmail.com",
+    "partnerName": "sharif"
+  },
+  {
+    "id": "r401",
+    "hotelId": "h4",
+    "name": "Traditional Tatami Suite with Private Onsen",
+    "slug": "tatami-suite-private-onsen",
+    "type": "Ryokan Suite",
+    "price": 380,
+    "size": "65 m² / 700 sq ft",
+    "capacity": 3,
+    "bedType": "Japanese Futon Bedding",
+    "view": "Private Zen Garden & Bamboo Forest",
+    "images": [
+      "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "amenities": [
+      "Cedar Open-Air Onsen",
+      "Shoji Sliding Doors",
+      "Matcha Tea Set",
+      "Yukata Robes",
+      "Garden Deck"
+    ],
+    "description": "Authentic Japanese serenity. Features fragrant cedarwood outdoor thermal bath fed by natural hot springs, woven tatami mat flooring, and traditional garden view.",
+    "status": "Available",
+    "partnerId": "u_1787619856938",
+    "partnerEmail": "sharif@gmail.com",
+    "partnerName": "sharif"
+  },
+  {
+    "id": "r501",
+    "hotelId": "h5",
+    "name": "Matterhorn View Chalet Suite",
+    "slug": "matterhorn-view-chalet-suite",
+    "type": "Alpine Suite",
+    "price": 640,
+    "size": "95 m² / 1022 sq ft",
+    "capacity": 4,
+    "bedType": "1 King Bed + 2 Twin Beds",
+    "view": "Matterhorn Peak & Snow Slopes",
+    "images": [
+      "https://images.unsplash.com/photo-1502784444187-359ac186c5bb?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "amenities": [
+      "Stone Fireplace",
+      "Heated Balcony",
+      "Sauna Shower",
+      "Ski Boots Warmer",
+      "Wine Cellar Fridge"
+    ],
+    "description": "Warm alpine charm meets modern Scandinavian design. Cozy up around your natural stone wood fireplace while staring at snow-capped Alpine peaks.",
+    "status": "Available",
+    "partnerId": "u_1787619856938",
+    "partnerEmail": "sharif@gmail.com",
+    "partnerName": "sharif"
+  }
+]

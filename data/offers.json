@@ -1,0 +1,38 @@
+[
+  {
+    "id": "off1",
+    "code": "SUMMER20",
+    "title": "Summer Escapes 20% Off",
+    "discountType": "percentage",
+    "discountValue": 20,
+    "minSpend": 300,
+    "validUntil": "2026-10-31",
+    "description": "Unlock 20% off all luxury coastal resorts & overwater villas for bookings over $300.",
+    "category": "Seasonal",
+    "image": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    "id": "off2",
+    "code": "LUXE50",
+    "title": "Flat $50 Luxury Voucher",
+    "discountType": "fixed",
+    "discountValue": 50,
+    "minSpend": 400,
+    "validUntil": "2026-12-31",
+    "description": "Instant $50 credit applied at checkout for any 3+ night stay at participating properties.",
+    "category": "Voucher",
+    "image": "https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    "id": "off3",
+    "code": "WELCOME10",
+    "title": "First Stay 10% Discount",
+    "discountType": "percentage",
+    "discountValue": 10,
+    "minSpend": 100,
+    "validUntil": "2027-01-01",
+    "description": "Exclusive welcome gift for newly registered members on their inaugural luxury booking.",
+    "category": "New Member",
+    "image": "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80"
+  }
+]

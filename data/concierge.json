@@ -1,0 +1,38 @@
+[
+  {
+    "id": "FLG001",
+    "name": "Bebe W. Cullen",
+    "position": "Head Concierge",
+    "schedule": "Monday - Friday | 8 AM - 4 PM",
+    "contact": "+1 (555) 234-5678",
+    "email": "bebe.cullen@example.com",
+    "status": "Active"
+  },
+  {
+    "id": "FLG002",
+    "name": "Alwar King",
+    "position": "Concierge Assistant",
+    "schedule": "Monday - Friday | 12 PM - 8 PM",
+    "contact": "+1 (555) 345-6789",
+    "email": "alwar.king@example.com",
+    "status": "Inactive"
+  },
+  {
+    "id": "FLG003",
+    "name": "Suzi Matsuda",
+    "position": "Tour Coordinator",
+    "schedule": "Saturday - Sunday | 9 AM - 6 PM",
+    "contact": "+1 (555) 789-0123",
+    "email": "suzi.matsuda@example.com",
+    "status": "Active"
+  },
+  {
+    "id": "FLG004",
+    "name": "Donnie Wong",
+    "position": "Night Porter",
+    "schedule": "Everyday | 10 PM - 6 AM",
+    "contact": "+1 (555) 890-1234",
+    "email": "donnie.wong@example.com",
+    "status": "Inactive"
+  }
+]
