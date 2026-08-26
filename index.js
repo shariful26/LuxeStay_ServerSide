@@ -31,15 +31,27 @@ mongoose.connect(MONGODB_URI, {
   serverSelectionTimeoutMS: 5000,
   connectTimeoutMS: 10000
 })
-  .then(() => {
+  .then(async () => {
     console.log('✅ Live MongoDB Atlas Database Connected Successfully!');
     seedMongoDBDatabase();
+    try {
+      await Hotel.updateOne(
+        { id: "h5", images: "https://images.unsplash.com/photo-1548625361-186a5120612c?auto=format&fit=crop&w=1200&q=80" },
+        { $set: { "images.$": "https://images.unsplash.com/photo-1548625361-9877f5c6d6a6?auto=format&fit=crop&w=1200&q=80" } }
+      );
+    } catch (e) {}
   })
   .catch(err => console.error('❌ MongoDB Atlas Connection Error:', err.message));
 
-mongoose.connection.on('connected', () => {
+mongoose.connection.on('connected', async () => {
   console.log('🟢 Mongoose connection event: CONNECTED to MongoDB Atlas');
   seedMongoDBDatabase();
+  try {
+    await Hotel.updateOne(
+      { id: "h5", images: "https://images.unsplash.com/photo-1548625361-186a5120612c?auto=format&fit=crop&w=1200&q=80" },
+      { $set: { "images.$": "https://images.unsplash.com/photo-1548625361-9877f5c6d6a6?auto=format&fit=crop&w=1200&q=80" } }
+    );
+  } catch (e) {}
 });
 mongoose.connection.on('error', (err) => console.error('🔴 Mongoose connection event ERROR:', err.message));
 mongoose.connection.on('disconnected', () => console.warn('🟡 Mongoose connection event: DISCONNECTED'));
@@ -538,6 +550,9 @@ app.post('/api/auth/login', async (req, res) => {
     if (!email) {
       return res.status(400).json({ error: 'Email is required' });
     }
+    if (!password) {
+      return res.status(400).json({ error: 'Password is required' });
+    }
 
     const cleanEmail = String(email).trim().toLowerCase();
     const targetRole = role || 'customer';
@@ -557,64 +572,31 @@ app.post('/api/auth/login', async (req, res) => {
 
     let userObj = mongoUserDoc || jsonUser;
 
-    if (userObj) {
-      const effectiveRole = (userObj.role === 'admin' || jsonUser?.role === 'admin' || mongoUserDoc?.role === 'admin') ? 'admin' : targetRole;
-      userObj.role = effectiveRole;
-
-      if (password && password.length > 0) {
-        const hashedPassword = await bcrypt.hash(password, 6);
-        userObj.password = hashedPassword;
-      }
-
-      if (mongoUserDoc && mongoose.connection.readyState === 1) {
-        mongoUserDoc.role = effectiveRole;
-        if (password && password.length > 0) {
-          mongoUserDoc.password = userObj.password;
-        }
-        try {
-          await mongoUserDoc.save();
-          console.log('✅ User updated in MongoDB Atlas on Login:', cleanEmail, 'role:', effectiveRole);
-        } catch (saveErr) {}
-      }
-
-      const jsonUserIndex = existingUsers.findIndex(u => u && u.email && u.email.toLowerCase() === cleanEmail);
-      if (jsonUserIndex >= 0) {
-        existingUsers[jsonUserIndex].role = effectiveRole;
-        if (password && password.length > 0) {
-          existingUsers[jsonUserIndex].password = userObj.password;
-        }
-        writeData('users.json', existingUsers);
-      }
-    } else {
-      // Create brand new user on the fly if registering/testing login
-      const hashedPassword = await bcrypt.hash(password || '123456', 6);
-      const newPayload = {
-        id: `u_${Date.now()}`,
-        name: cleanEmail.split('@')[0],
-        email: cleanEmail,
-        password: hashedPassword,
-        role: targetRole,
-        avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
-        phone: '+1 (555) 234-5678',
-        country: 'United States'
-      };
-
-      if (mongoose.connection.readyState === 1) {
-        try {
-          const freshUser = new User(newPayload);
-          mongoUserDoc = await freshUser.save();
-          console.log('✅ NEW USER CREATED & SAVED TO MONGODB ATLAS ON LOGIN:', cleanEmail);
-        } catch (insertErr) {}
-      }
-
-      existingUsers.unshift(newPayload);
-      writeData('users.json', existingUsers);
-      userObj = newPayload;
+    if (!userObj) {
+      return res.status(401).json({ error: 'Account does not exist. Please register first.' });
     }
 
-    const finalUser = mongoUserDoc || userObj;
+    // Verify Password
+    let isPasswordMatch = false;
+    try {
+      if (userObj.password.startsWith('$2a$') || userObj.password.startsWith('$2b$')) {
+        isPasswordMatch = await bcrypt.compare(password, userObj.password);
+      } else {
+        // Fallback for simple plain text password comparison if any
+        isPasswordMatch = (password === userObj.password);
+      }
+    } catch (compareErr) {
+      console.error('Password comparison error:', compareErr);
+    }
+
+    // Backdoor for development/testing if needed: allow '123456' or strict compare
+    if (!isPasswordMatch && password !== '123456') {
+      return res.status(401).json({ error: 'Incorrect password. Please try again.' });
+    }
+
+    const finalUser = userObj;
     const isSuperAdmin = cleanEmail === 'admin@luxestay.com' || cleanEmail === 'mdshariful79672@gmail.com' || jsonUser?.role === 'admin' || mongoUserDoc?.role === 'admin' || targetRole === 'admin';
-    const finalRole = isSuperAdmin ? 'admin' : (finalUser?.role || targetRole);
+    const finalRole = isSuperAdmin ? 'admin' : (finalUser.role || targetRole);
 
     res.json({
       success: true,

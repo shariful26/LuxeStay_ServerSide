@@ -68,11 +68,11 @@
     "rating": 5,
     "reviewCount": 0,
     "starRating": 5,
-    "featured": false,
+    "featured": true,
     "partnerId": "u_1786134647659",
     "partnerEmail": "shariful@gmail.com",
     "partnerName": "shariful",
-    "status": "Pending Approval",
+    "status": "Approved",
     "description": "Step directly into turquoise waters from your private villa deck. Complete with glass-floor viewing portals, private infinity plunge pools, and bespoke marine biologist tours.",
     "address": "Oia Cliffside, Santorini, Greece",
     "images": [
@@ -127,7 +127,7 @@
     "rating": 4.95,
     "reviewCount": 128,
     "starRating": 5,
-    "featured": true,
+    "featured": false,
     "category": "Resort & Spa",
     "images": [
       "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80",
@@ -262,7 +262,7 @@
     "category": "Ski Resort",
     "images": [
       "https://images.unsplash.com/photo-1502784444187-359ac186c5bb?auto=format&fit=crop&w=1200&q=80",
-      "https://images.unsplash.com/photo-1548625361-186a5120612c?auto=format&fit=crop&w=1200&q=80"
+      "https://images.unsplash.com/photo-1548625361-9877f5c6d6a6?auto=format&fit=crop&w=1200&q=80"
     ],
     "amenities": [
       "Ski-In/Ski-Out",

@@ -1,7 +1,7 @@
 [
   {
     "id": "BK-23524",
-    "status": "Checked-In",
+    "status": "Checked-Out",
     "createdAt": "2026-08-25T21:50:22.398Z",
     "roomId": "r1787694480102",
     "guestName": "Shariful alam siddique",
@@ -68,7 +68,7 @@
   },
   {
     "id": "BK-54333",
-    "status": "Checked-In",
+    "status": "Checked-Out",
     "createdAt": "2026-08-25T18:35:20.076Z",
     "hotelId": "h1787678113540",
     "hotelName": "Fast Test Hotel",
@@ -144,7 +144,7 @@
   },
   {
     "id": "BK-84387",
-    "status": "Checked-In",
+    "status": "Checked-Out",
     "createdAt": "2026-08-25T18:04:40.314Z",
     "hotelId": "h1",
     "hotelName": "The Grand Azure Resort & Spa",
@@ -178,7 +178,7 @@
   },
   {
     "id": "BK-22445",
-    "status": "Checked-In",
+    "status": "Checked-Out",
     "createdAt": "2026-08-25T17:47:09.242Z",
     "hotelId": "h5",
     "hotelName": "Alpine Chalet & Thermal Spa",
@@ -205,7 +205,7 @@
   },
   {
     "id": "BK-82419",
-    "status": "Checked-In",
+    "status": "Checked-Out",
     "createdAt": "2026-08-25T17:43:26.106Z",
     "hotelId": "h1787677822176",
     "hotelName": "Hotel Sheraton",
@@ -341,7 +341,7 @@
   },
   {
     "id": "BK-18776",
-    "status": "Checked-In",
+    "status": "Checked-Out",
     "createdAt": "2026-08-25T16:06:46.413Z",
     "hotelId": "h1",
     "hotelName": "The Grand Azure Resort & Spa",
@@ -396,7 +396,7 @@
   },
   {
     "id": "BK-14734",
-    "status": "Checked-In",
+    "status": "Checked-Out",
     "createdAt": "2026-08-25T15:39:00.778Z",
     "hotelId": "h2",
     "hotelName": "Overwater Coral Sanctuary",
