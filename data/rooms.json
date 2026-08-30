@@ -1,5 +1,34 @@
 [
   {
+    "id": "r1787949347819",
+    "hotelId": "h1787949069764",
+    "name": "Hotel Nirala",
+    "slug": "hotel-nirala",
+    "type": "Deluxe Room",
+    "price": 450,
+    "size": "75 m² / 807 sq ft",
+    "capacity": 2,
+    "bedType": "1 King Bed",
+    "view": "Panoramic Sea & Caldera View",
+    "images": [
+      "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "amenities": [
+      "Private Heated Pool",
+      "Balcony Lounge",
+      "Espresso Machine",
+      "Marble Bath",
+      "Smart TV"
+    ],
+    "inclusions": {
+      "freeCancellation": true,
+      "breakfastIncluded": true,
+      "instantVoucher": true
+    },
+    "description": "Spacious luxury room with premium amenities and stunning views.",
+    "status": "Available"
+  },
+  {
     "id": "r1787697539249",
     "hotelId": "h1787677822176",
     "name": "Sheraton beach",

@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "start": "node index.js",
-    "dev": "node --watch index.js"
+    "dev": "node --watch --watch-path=./src --watch-path=./index.js index.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

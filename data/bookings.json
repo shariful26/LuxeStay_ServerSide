@@ -32,7 +32,7 @@
   },
   {
     "id": "BK-69106",
-    "status": "Confirmed",
+    "status": "Checked-In",
     "createdAt": "2026-08-25T18:37:33.293Z",
     "hotelId": "h6",
     "hotelName": "Ubud Rainforest Eco Manor",
@@ -110,7 +110,7 @@
   },
   {
     "id": "BK-16324",
-    "status": "Confirmed",
+    "status": "Checked-In",
     "createdAt": "2026-08-25T18:28:07.854Z",
     "hotelId": "h1",
     "hotelName": "The Grand Azure Resort & Spa",
@@ -368,7 +368,7 @@
   },
   {
     "id": "BK-52389",
-    "status": "Checked-In",
+    "status": "Checked-Out",
     "createdAt": "2026-08-25T16:06:20.364Z",
     "hotelId": "h1",
     "hotelName": "The Grand Azure Resort & Spa",

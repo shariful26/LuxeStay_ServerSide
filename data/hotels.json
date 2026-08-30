@@ -1,5 +1,34 @@
 [
   {
+    "id": "h1787949069764",
+    "name": "Relax Hotel",
+    "slug": "relax-hotel",
+    "destination": "Santorini, Greece",
+    "destinationSlug": "santorini-greece",
+    "category": "City Luxury Hotel",
+    "pricePerNight": 430,
+    "rating": 5,
+    "reviewCount": 0,
+    "starRating": 5,
+    "featured": false,
+    "partnerId": "6a8ce9f234a52ee30061db0d",
+    "partnerEmail": "manager@luxestay.com",
+    "partnerName": "manager",
+    "status": "Approved",
+    "description": "Welcome to a peaceful seaside escape located just five minutes from the historic city center. The Azure Coast Hotel offers a luxurious mix of modern comfort and coastal beauty. Relax in our bright, spacious rooms featuring private balconies with full ocean views, free high-speed Wi-Fi, and plush bedding.",
+    "address": "Oia Cliffside Drive 12, Santorini, Greece",
+    "images": [
+      "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "amenities": [
+      "Infinity Pool",
+      "Luxury Spa",
+      "Free Wi-Fi",
+      "Butler Service",
+      "Private Beach"
+    ]
+  },
+  {
     "id": "h1787678113540",
     "name": "Fast Test Hotel",
     "slug": "fast-test-hotel",
@@ -18,7 +47,10 @@
     "description": "Exclusive luxury hotel property with world-class hospitality.",
     "address": "Oia Cliffside, Santorini, Greece",
     "images": [
-      "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80"
+      "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=1200&q=80"
     ],
     "amenities": [
       "Infinity Pool",
@@ -47,7 +79,10 @@
     "description": "Step directly into turquoise waters from your private villa deck. Complete with glass-floor viewing portals, private infinity plunge pools, and bespoke marine biologist tours.",
     "address": "Oia Cliffside, Santorini, Greece",
     "images": [
-      "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80"
+      "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=1200&q=80"
     ],
     "amenities": [
       "Infinity Pool",
@@ -76,7 +111,10 @@
     "description": "Step directly into turquoise waters from your private villa deck. Complete with glass-floor viewing portals, private infinity plunge pools, and bespoke marine biologist tours.",
     "address": "Oia Cliffside, Santorini, Greece",
     "images": [
-      "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80"
+      "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=1200&q=80"
     ],
     "amenities": [
       "Infinity Pool",
@@ -105,7 +143,10 @@
     "description": "Perched on the dramatic cliffs of Oia overlooking the Aegean Sea, The Grand Azure Resort delivers an unmatched sanctuary of sun-drenched infinity pools, private volcanic-stone hot tubs, and world-",
     "address": "Oia Cliffside, Santorini, Greece",
     "images": [
-      "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80"
+      "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=1200&q=80"
     ],
     "amenities": [
       "Infinity Pool",
@@ -147,7 +188,7 @@
     "description": "Perched on the dramatic cliffs of Oia overlooking the Aegean Sea, The Grand Azure Resort delivers an unmatched sanctuary of sun-drenched infinity pools, private volcanic-stone hot tubs, and world-class Mediterranean gastronomy.",
     "partnerId": "u_1787619856938",
     "partnerName": "sharif",
-    "status": "active",
+    "status": "Approved",
     "partnerEmail": "sharif@gmail.com"
   },
   {
@@ -167,7 +208,8 @@
     "images": [
       "https://images.unsplash.com/photo-1439066615861-d1af74d74000?auto=format&fit=crop&w=1200&q=80",
       "https://images.unsplash.com/photo-1573843981267-be1999ff37cd?auto=format&fit=crop&w=1200&q=80",
-      "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80"
+      "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80"
     ],
     "amenities": [
       "Glass Floor Views",
@@ -199,7 +241,9 @@
     "category": "City Luxury Hotel",
     "images": [
       "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=1200&q=80",
-      "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?auto=format&fit=crop&w=1200&q=80"
+      "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80"
     ],
     "amenities": [
       "Rooftop Lounge",
@@ -231,7 +275,9 @@
     "category": "Boutique Ryokan",
     "images": [
       "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&w=1200&q=80",
-      "https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=1200&q=80"
+      "https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80"
     ],
     "amenities": [
       "Private Hot Spring (Onsen)",
@@ -261,8 +307,10 @@
     "featured": false,
     "category": "Ski Resort",
     "images": [
-      "https://images.unsplash.com/photo-1502784444187-359ac186c5bb?auto=format&fit=crop&w=1200&q=80",
-      "https://images.unsplash.com/photo-1548625361-9877f5c6d6a6?auto=format&fit=crop&w=1200&q=80"
+      "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1584132967334-10e028bd69f7?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=1200&q=80"
     ],
     "amenities": [
       "Ski-In/Ski-Out",
@@ -293,7 +341,9 @@
     "category": "Eco Wellness Resort",
     "images": [
       "https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=1200&q=80",
-      "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=1200&q=80"
+      "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80"
     ],
     "amenities": [
       "Jungle Infinity Pool",
@@ -305,7 +355,7 @@
     "description": "Wake up to misty green jungle valleys and river cascades. Complete with daily sunrise yoga, organic farm-to-table cuisine, and holistic Ayurvedic spa therapies.",
     "partnerId": "u_1787619856938",
     "partnerName": "sharif",
-    "status": "active",
+    "status": "Approved",
     "partnerEmail": "sharif@gmail.com"
   }
 ]
