@@ -30,15 +30,6 @@ export async function seedMongoDBDatabase() {
         await Hotel.insertMany(hotels);
         console.log(`✅ MongoDB Atlas: SEEDED ${hotels.length} Hotels successfully!`);
       }
-    } else {
-      for (const h of hotels) {
-        if (h.id && h.images && h.images.length > 0) {
-          await Hotel.updateOne(
-            { id: h.id },
-            { $set: { images: h.images } }
-          );
-        }
-      }
     }
 
     // 2. Rooms

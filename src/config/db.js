@@ -21,19 +21,17 @@ export const connectDatabase = async () => {
   if (!cached.promise) {
     const opts = {
       bufferCommands: false,
-      serverSelectionTimeoutMS: 8000,
-      connectTimeoutMS: 10000
+      serverSelectionTimeoutMS: 5000,
+      connectTimeoutMS: 5000,
+      maxPoolSize: 10
     };
 
-    cached.promise = mongoose.connect(MONGODB_URI, opts).then(async (m) => {
+    cached.promise = mongoose.connect(MONGODB_URI, opts).then((m) => {
       console.log('✅ [Database] MongoDB Atlas Connected Successfully (Live Persistence Mode)!');
       if (!cached.seeded) {
-        try {
-          await seedMongoDBDatabase();
-          cached.seeded = true;
-        } catch (e) {
-          console.warn('⚠️ Seeder notice:', e.message);
-        }
+        cached.seeded = true;
+        // Run seeder asynchronously in background so it never slows down user API responses
+        seedMongoDBDatabase().catch(() => {});
       }
       return m;
     }).catch(err => {
