@@ -1,46 +1,30 @@
 import express from 'express';
+import mongoose from 'mongoose';
+import { Message } from '../models/index.js';
 import { readData, writeData } from '../utils/fileDb.js';
 
 const router = express.Router();
 
 // GET all messages
-router.get('/', (req, res) => {
-  let messages = readData('messages.json');
-  if (!messages || messages.length === 0) {
-    messages = [
-      {
-        id: 'msg1',
-        senderId: 'alice',
-        senderName: 'Alice Johnson',
-        senderRole: 'customer',
-        recipientId: 'partner1',
-        recipientName: 'Hotel Concierge',
-        text: 'Hi, can I request a late check-out for Room 101?',
-        time: '9:15 AM',
-        read: true,
-        createdAt: new Date(Date.now() - 3600000).toISOString()
-      },
-      {
-        id: 'msg2',
-        senderId: 'partner1',
-        senderName: 'Hotel Concierge',
-        senderRole: 'manager',
-        recipientId: 'alice',
-        recipientName: 'Alice Johnson',
-        text: 'Hi Alice, we can accommodate a late check-out for you. How late would you like to stay?',
-        time: '9:30 AM',
-        read: true,
-        createdAt: new Date(Date.now() - 1800000).toISOString()
-      }
-    ];
-    writeData('messages.json', messages);
+router.get('/', async (req, res) => {
+  let messages = [];
+  try {
+    if (mongoose.connection.readyState === 1) {
+      messages = await Message.find({}).sort({ createdAt: 1 }).lean();
+    }
+  } catch (err) {
+    console.warn('⚠️ MongoDB Message query warning:', err.message);
   }
+
+  if (!messages || messages.length === 0) {
+    messages = readData('messages.json');
+  }
+
   res.json(messages);
 });
 
 // POST send new message
-router.post('/', (req, res) => {
-  const messages = readData('messages.json');
+router.post('/', async (req, res) => {
   const newMessage = {
     id: `msg-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
     senderId: req.body.senderId,
@@ -52,25 +36,48 @@ router.post('/', (req, res) => {
     text: req.body.text,
     time: req.body.time || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     read: false,
-    createdAt: new Date().toISOString()
+    createdAt: new Date()
   };
+
+  try {
+    if (mongoose.connection.readyState === 1) {
+      const mongoMsg = new Message(newMessage);
+      await mongoMsg.save();
+    }
+  } catch (err) {
+    console.warn('⚠️ MongoDB Message save warning:', err.message);
+  }
+
+  // Also write to local JSON file for fallback
+  const messages = readData('messages.json');
   messages.push(newMessage);
   writeData('messages.json', messages);
+
   res.status(201).json(newMessage);
 });
 
 // PUT mark messages from a user as read
-router.put('/read', (req, res) => {
+router.put('/read', async (req, res) => {
   const { senderId, recipientId } = req.body;
   if (!senderId || !recipientId) {
     return res.status(400).json({ error: 'senderId and recipientId are required' });
+  }
+
+  try {
+    if (mongoose.connection.readyState === 1) {
+      await Message.updateMany(
+        { senderId: String(senderId), recipientId: String(recipientId), read: false },
+        { $set: { read: true } }
+      );
+    }
+  } catch (err) {
+    console.warn('⚠️ MongoDB Message update warning:', err.message);
   }
 
   const messages = readData('messages.json');
   let updated = false;
 
   messages.forEach(msg => {
-    // If the message was sent by the customer (senderId) to the manager (recipientId), mark as read
     if (String(msg.senderId) === String(senderId) && String(msg.recipientId) === String(recipientId) && !msg.read) {
       msg.read = true;
       updated = true;

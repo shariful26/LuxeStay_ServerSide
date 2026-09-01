@@ -1,0 +1,17 @@
+import mongoose from 'mongoose';
+
+const messageSchema = new mongoose.Schema({
+  id: { type: String, required: true, unique: true },
+  senderId: { type: String },
+  senderName: { type: String },
+  senderRole: { type: String },
+  senderAvatar: { type: String },
+  recipientId: { type: String },
+  recipientName: { type: String },
+  text: { type: String },
+  time: { type: String },
+  read: { type: Boolean, default: false },
+  createdAt: { type: Date, default: Date.now }
+}, { timestamps: true });
+
+export const Message = mongoose.models.Message || mongoose.model('Message', messageSchema);

@@ -15,8 +15,20 @@ const datesOverlap = (startA, endA, startB, endB) => {
 };
 
 // GET bookings (with automatic date status evaluation)
-router.get('/', (req, res) => {
-  let bookings = readData('bookings.json');
+router.get('/', async (req, res) => {
+  let bookings = [];
+  try {
+    if (mongoose.connection.readyState === 1) {
+      bookings = await Booking.find({}).lean();
+    }
+  } catch (err) {
+    console.warn('⚠️ MongoDB Booking query warning, using JSON fallback:', err.message);
+  }
+
+  if (!bookings || bookings.length === 0) {
+    bookings = readData('bookings.json');
+  }
+
   const now = new Date();
   let updatedAny = false;
 

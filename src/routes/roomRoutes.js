@@ -1,6 +1,6 @@
 import express from 'express';
 import mongoose from 'mongoose';
-import { Room } from '../models/index.js';
+import { Room, Hotel } from '../models/index.js';
 import { readData, writeData } from '../utils/fileDb.js';
 
 const router = express.Router();
@@ -12,26 +12,50 @@ router.get('/', async (req, res) => {
     if (mongoose.connection.readyState === 1) {
       rooms = await Room.find({}).lean();
     }
-  } catch (e) {}
+  } catch (err) {
+    console.warn('⚠️ MongoDB Room query warning:', err.message);
+  }
 
   if (!rooms || rooms.length === 0) {
     rooms = readData('rooms.json');
   }
+
+  const { hotelId, destination } = req.query;
+  if (hotelId) {
+    rooms = rooms.filter(r => String(r.hotelId) === String(hotelId));
+  }
+
   res.json(rooms);
 });
 
 // GET room by ID / slug
-router.get('/:id', (req, res) => {
-  const rooms = readData('rooms.json');
-  const room = rooms.find(r => r.id === req.params.id || r.slug === req.params.id);
+router.get('/:id', async (req, res) => {
+  let room = null;
+  let hotel = null;
+
+  try {
+    if (mongoose.connection.readyState === 1) {
+      room = await Room.findOne({ $or: [{ id: req.params.id }, { slug: req.params.id }] }).lean();
+      if (room && room.hotelId) {
+        hotel = await Hotel.findOne({ id: room.hotelId }).lean();
+      }
+    }
+  } catch (err) {}
+
+  if (!room) {
+    const rooms = readData('rooms.json');
+    room = rooms.find(r => r.id === req.params.id || r.slug === req.params.id);
+    if (room) {
+      hotel = readData('hotels.json').find(h => h.id === room.hotelId);
+    }
+  }
+
   if (!room) return res.status(404).json({ error: 'Room not found' });
-  const hotel = readData('hotels.json').find(h => h.id === room.hotelId);
   res.json({ ...room, hotel });
 });
 
 // POST create room
-router.post('/', (req, res) => {
-  const rooms = readData('rooms.json');
+router.post('/', async (req, res) => {
   const newRoom = {
     id: `r${Date.now()}`,
     hotelId: req.body.hotelId || 'h1',
@@ -51,64 +75,58 @@ router.post('/', (req, res) => {
       instantVoucher: req.body.instantVoucher !== undefined ? req.body.instantVoucher : true
     },
     description: req.body.description || "Spacious luxury room with premium amenities and stunning views.",
-    status: req.body.status || "Available"
+    status: req.body.status || "Available",
+    housekeeping: req.body.housekeeping || "Clean"
   };
 
+  try {
+    if (mongoose.connection.readyState === 1) {
+      const mongoRoom = new Room(newRoom);
+      await mongoRoom.save();
+    }
+  } catch (err) {
+    console.warn('⚠️ MongoDB Room save warning:', err.message);
+  }
+
+  const rooms = readData('rooms.json');
   rooms.unshift(newRoom);
   writeData('rooms.json', rooms);
+
   res.status(201).json(newRoom);
 });
 
 // PUT update room
-router.put('/:id', (req, res) => {
+router.put('/:id', async (req, res) => {
+  try {
+    if (mongoose.connection.readyState === 1) {
+      await Room.findOneAndUpdate({ id: req.params.id }, { $set: req.body });
+    }
+  } catch (err) {}
+
   let rooms = readData('rooms.json');
   const index = rooms.findIndex(r => r.id === req.params.id);
-  if (index === -1) return res.status(404).json({ error: 'Room not found' });
+  if (index !== -1) {
+    rooms[index] = { ...rooms[index], ...req.body };
+    writeData('rooms.json', rooms);
+    return res.json(rooms[index]);
+  }
 
-  const updatedRoom = {
-    ...rooms[index],
-    name: req.body.name !== undefined ? req.body.name : rooms[index].name,
-    type: req.body.type !== undefined ? req.body.type : rooms[index].type,
-    price: req.body.price !== undefined ? Number(req.body.price) : rooms[index].price,
-    capacity: req.body.capacity !== undefined ? Number(req.body.capacity) : rooms[index].capacity,
-    bedType: req.body.bedType !== undefined ? req.body.bedType : rooms[index].bedType,
-    size: req.body.size !== undefined ? req.body.size : rooms[index].size,
-    view: req.body.view !== undefined ? req.body.view : rooms[index].view,
-    status: req.body.status !== undefined ? req.body.status : rooms[index].status,
-    description: req.body.description !== undefined ? req.body.description : rooms[index].description,
-    images: req.body.image ? [req.body.image] : (req.body.images || rooms[index].images),
-    inclusions: {
-      freeCancellation: req.body.freeCancellation !== undefined ? req.body.freeCancellation : (rooms[index].inclusions?.freeCancellation ?? true),
-      breakfastIncluded: req.body.breakfastIncluded !== undefined ? req.body.breakfastIncluded : (rooms[index].inclusions?.breakfastIncluded ?? true),
-      instantVoucher: req.body.instantVoucher !== undefined ? req.body.instantVoucher : (rooms[index].inclusions?.instantVoucher ?? true)
-    }
-  };
-
-  rooms[index] = updatedRoom;
-  writeData('rooms.json', rooms);
-  res.json(updatedRoom);
-});
-
-// PUT update room housekeeping status
-router.put('/:id/housekeeping', (req, res) => {
-  const rooms = readData('rooms.json');
-  const index = rooms.findIndex(r => r.id === req.params.id);
-  if (index === -1) return res.status(404).json({ error: 'Room not found' });
-
-  rooms[index].housekeepingStatus = req.body.housekeepingStatus || 'Ready';
-  rooms[index].housekeepingPriority = req.body.housekeepingPriority || 'Medium';
-  rooms[index].housekeepingNotes = req.body.housekeepingNotes || '';
-  
-  writeData('rooms.json', rooms);
-  res.json(rooms[index]);
+  res.json({ message: 'Room updated' });
 });
 
 // DELETE room
-router.delete('/:id', (req, res) => {
+router.delete('/:id', async (req, res) => {
+  try {
+    if (mongoose.connection.readyState === 1) {
+      await Room.deleteOne({ id: req.params.id });
+    }
+  } catch (err) {}
+
   let rooms = readData('rooms.json');
   rooms = rooms.filter(r => r.id !== req.params.id);
   writeData('rooms.json', rooms);
-  res.json({ message: 'Room deleted successfully' });
+
+  res.json({ success: true, message: 'Room deleted successfully' });
 });
 
 export default router;

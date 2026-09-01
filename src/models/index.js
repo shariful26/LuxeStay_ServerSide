@@ -7,3 +7,6 @@ export { Offer } from './Offer.js';
 export { Blog } from './Blog.js';
 export { Transfer } from './Transfer.js';
 export { Payout } from './Payout.js';
+export { Message } from './Message.js';
+export { Review } from './Review.js';
+export { Inventory } from './Inventory.js';
