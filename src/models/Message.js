@@ -8,6 +8,7 @@ const messageSchema = new mongoose.Schema({
   senderAvatar: { type: String },
   recipientId: { type: String },
   recipientName: { type: String },
+  recipientRole: { type: String },
   text: { type: String },
   time: { type: String },
   read: { type: Boolean, default: false },

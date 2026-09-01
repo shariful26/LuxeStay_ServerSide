@@ -33,6 +33,7 @@ router.post('/', async (req, res) => {
     senderAvatar: req.body.senderAvatar || '',
     recipientId: req.body.recipientId,
     recipientName: req.body.recipientName,
+    recipientRole: req.body.recipientRole || (req.body.senderRole === 'customer' ? 'manager' : 'customer'),
     text: req.body.text,
     time: req.body.time || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     read: false,
