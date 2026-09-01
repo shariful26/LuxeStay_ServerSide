@@ -14,7 +14,7 @@ const datesOverlap = (startA, endA, startB, endB) => {
   return aIn < bOut && aOut > bIn;
 };
 
-// GET bookings (with automatic date status evaluation)
+// GET bookings (Live from MongoDB Atlas with JSON fallback)
 router.get('/', async (req, res) => {
   let bookings = [];
   try {
@@ -29,33 +29,9 @@ router.get('/', async (req, res) => {
     bookings = readData('bookings.json');
   }
 
-  const now = new Date();
-  let updatedAny = false;
-
-  bookings = bookings.map(b => {
-    if (b.status !== 'Cancelled') {
-      const checkOutDate = new Date(b.checkOut);
-      const checkInDate = new Date(b.checkIn);
-      checkOutDate.setHours(23, 59, 59, 999);
-
-      if (now > checkOutDate && b.status !== 'Checked-Out') {
-        b.status = 'Checked-Out';
-        updatedAny = true;
-      } else if (now >= checkInDate && now <= checkOutDate && b.status !== 'Checked-In' && b.status !== 'Checked-Out') {
-        b.status = 'Checked-In';
-        updatedAny = true;
-      }
-    }
-    return b;
-  });
-
-  if (updatedAny) {
-    writeData('bookings.json', bookings);
-  }
-
   const { userId } = req.query;
   if (userId) {
-    return res.json(bookings.filter(b => b.userId === userId));
+    return res.json(bookings.filter(b => b.userId === userId || b.guestEmail === userId));
   }
   res.json(bookings);
 });
@@ -286,14 +262,54 @@ router.put('/:id', async (req, res) => {
   res.json(updatedBooking);
 });
 
-// PUT update booking status
-router.put('/:id/status', (req, res) => {
+// PUT update booking status (Persists directly to MongoDB Atlas)
+router.put('/:id/status', async (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
+
+  let mongoUpdated = null;
+  if (mongoose.connection.readyState === 1) {
+    try {
+      mongoUpdated = await Booking.findOneAndUpdate(
+        { id },
+        { $set: { status, updatedAt: new Date().toISOString() } },
+        { new: true }
+      ).lean();
+    } catch (e) {
+      console.warn('⚠️ MongoDB booking status update error:', e.message);
+    }
+  }
+
   const bookings = readData('bookings.json');
-  const index = bookings.findIndex(b => b.id === req.params.id);
-  if (index === -1) return res.status(404).json({ error: 'Booking not found' });
-  bookings[index].status = req.body.status;
-  writeData('bookings.json', bookings);
-  res.json(bookings[index]);
+  const index = bookings.findIndex(b => b.id === id);
+  if (index !== -1) {
+    bookings[index].status = status;
+    bookings[index].updatedAt = new Date().toISOString();
+    writeData('bookings.json', bookings);
+    return res.json(mongoUpdated || bookings[index]);
+  }
+
+  if (mongoUpdated) {
+    return res.json(mongoUpdated);
+  }
+
+  res.json({ id, status });
+});
+
+// DELETE booking (Deletes from MongoDB Atlas & JSON)
+router.delete('/:id', async (req, res) => {
+  const { id } = req.params;
+
+  if (mongoose.connection.readyState === 1) {
+    try {
+      await Booking.findOneAndDelete({ id });
+    } catch (e) {}
+  }
+
+  const bookings = readData('bookings.json');
+  const filtered = bookings.filter(b => b.id !== id);
+  writeData('bookings.json', filtered);
+  res.json({ success: true, message: 'Booking deleted successfully' });
 });
 
 // PUT extend stay
