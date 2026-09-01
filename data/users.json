@@ -1,5 +1,38 @@
 [
   {
+    "id": "u_customer_demo",
+    "name": "Alice Johnson",
+    "email": "customer@luxestay.com",
+    "password": "$2b$10$UvwH7HvWaU5QS1F6NmATTOY.fwGCPKhm5glAz85lgeLqliEZ2Qpi.",
+    "role": "customer",
+    "phone": "+1 (555) 234-5678",
+    "avatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80",
+    "country": "United Kingdom",
+    "memberSince": "2026"
+  },
+  {
+    "id": "u_manager_demo",
+    "name": "Shariful Islam (Hotel Manager)",
+    "email": "manager@luxestay.com",
+    "password": "$2b$10$UvwH7HvWaU5QS1F6NmATTOY.fwGCPKhm5glAz85lgeLqliEZ2Qpi.",
+    "role": "manager",
+    "phone": "+1 (555) 000-1122",
+    "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80",
+    "country": "United States",
+    "memberSince": "2026"
+  },
+  {
+    "id": "u_admin_demo",
+    "name": "System Administrator",
+    "email": "admin@luxestay.com",
+    "password": "$2b$10$UvwH7HvWaU5QS1F6NmATTOY.fwGCPKhm5glAz85lgeLqliEZ2Qpi.",
+    "role": "admin",
+    "phone": "+1 (555) 999-8877",
+    "avatar": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=200&q=80",
+    "country": "United States",
+    "memberSince": "2026"
+  },
+  {
     "id": "u_1787948171292",
     "name": "t",
     "email": "t@gmail.com",
