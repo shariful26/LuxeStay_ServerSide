@@ -1,5 +1,135 @@
 [
   {
+    "id": "BK-83788",
+    "status": "Confirmed",
+    "createdAt": "2026-09-01T19:46:19.307Z",
+    "hotelId": "h1",
+    "hotelName": "The Grand Azure Resort & Spa",
+    "roomId": "r1787432242935",
+    "roomName": "Ocean Oceana",
+    "guestName": "Customar",
+    "guestEmail": "customer@luxestay.com",
+    "guestPhone": "01871126026",
+    "checkIn": "2026-09-01",
+    "checkOut": "2026-09-02",
+    "nights": 1,
+    "guests": 2,
+    "nightlyRate": 320,
+    "mealPlan": "Room Only (No Meals)",
+    "mealPlanTotal": 0,
+    "subtotal": 320,
+    "addOns": [
+      {
+        "id": "a1",
+        "name": "Airport VIP Shuttle Transfer",
+        "price": 80,
+        "desc": "Luxury private chauffeur from/to airport"
+      }
+    ],
+    "discount": 0,
+    "tax": 40,
+    "total": 440,
+    "currency": "USD",
+    "paymentGateway": "stripe",
+    "paymentMethod": "Stripe VISA (•••• 4242)",
+    "paymentStatus": "Paid",
+    "transactionId": "pi_3UAxdKIS5scwRkQw2rZczVoT",
+    "paidAt": "2026-09-01T19:46:19.327Z",
+    "userId": "u_1787616645932",
+    "stripeTxId": "pi_3UAxdKIS5scwRkQw2rZczVoT",
+    "stripeStatus": "succeeded"
+  },
+  {
+    "id": "BK-26592",
+    "status": "Confirmed",
+    "createdAt": "2026-09-01T19:43:15.443Z",
+    "hotelId": "h1",
+    "hotelName": "The Grand Azure Resort & Spa",
+    "roomId": "r1787432242935",
+    "roomName": "Ocean Oceana",
+    "guestName": "Customar",
+    "guestEmail": "customer@luxestay.com",
+    "guestPhone": "01871126026",
+    "checkIn": "2026-10-29",
+    "checkOut": "2026-10-30",
+    "nights": 1,
+    "guests": 2,
+    "nightlyRate": 320,
+    "mealPlan": "Room Only (No Meals)",
+    "mealPlanTotal": 0,
+    "subtotal": 320,
+    "addOns": [
+      {
+        "id": "a1",
+        "name": "Airport VIP Shuttle Transfer",
+        "price": 80,
+        "desc": "Luxury private chauffeur from/to airport"
+      },
+      {
+        "id": "a4",
+        "name": "Early Check-in (12:00 PM)",
+        "price": 50,
+        "desc": "Guaranteed early room access upon arrival"
+      }
+    ],
+    "discount": 0,
+    "tax": 45,
+    "total": 495,
+    "currency": "USD",
+    "paymentGateway": "apple_google_pay",
+    "paymentMethod": "Apple / Google Pay (1-Touch Biometric)",
+    "paymentStatus": "Paid",
+    "transactionId": "APL-GPAY-YL5T25FK",
+    "paidAt": "2026-09-01T19:43:15.447Z",
+    "userId": "u_1787616645932"
+  },
+  {
+    "id": "BK-93437",
+    "status": "Confirmed",
+    "createdAt": "2026-09-01T19:38:34.619Z",
+    "hotelId": "h1",
+    "hotelName": "The Grand Azure Resort & Spa",
+    "roomId": "r1787432242935",
+    "roomName": "Ocean Oceana",
+    "guestName": "Customar",
+    "guestEmail": "customer@luxestay.com",
+    "guestPhone": "01871126026",
+    "checkIn": "2026-10-22",
+    "checkOut": "2026-10-28",
+    "nights": 6,
+    "guests": 2,
+    "nightlyRate": 320,
+    "mealPlan": "Room Only (No Meals)",
+    "mealPlanTotal": 0,
+    "subtotal": 1920,
+    "addOns": [
+      {
+        "id": "a1",
+        "name": "Airport VIP Shuttle Transfer",
+        "price": 80,
+        "desc": "Luxury private chauffeur from/to airport"
+      },
+      {
+        "id": "a4",
+        "name": "Early Check-in (12:00 PM)",
+        "price": 50,
+        "desc": "Guaranteed early room access upon arrival"
+      }
+    ],
+    "discount": 0,
+    "tax": 205,
+    "total": 2255,
+    "currency": "USD",
+    "paymentGateway": "stripe",
+    "paymentMethod": "Stripe VISA (•••• 4242)",
+    "paymentStatus": "Paid",
+    "transactionId": "pi_3UAxVpIS5scwRkQw178GeBsl",
+    "paidAt": "2026-09-01T19:38:34.623Z",
+    "userId": "u_1787616645932",
+    "stripeTxId": "pi_3UAxVpIS5scwRkQw178GeBsl",
+    "stripeStatus": "succeeded"
+  },
+  {
     "id": "BK-23524",
     "status": "Checked-Out",
     "createdAt": "2026-08-25T21:50:22.398Z",
@@ -32,7 +162,7 @@
   },
   {
     "id": "BK-69106",
-    "status": "Checked-In",
+    "status": "Checked-Out",
     "createdAt": "2026-08-25T18:37:33.293Z",
     "hotelId": "h6",
     "hotelName": "Ubud Rainforest Eco Manor",
@@ -97,7 +227,7 @@
   },
   {
     "id": "BK-42479",
-    "status": "Confirmed",
+    "status": "Checked-In",
     "createdAt": "2026-08-25T18:31:31.897Z",
     "roomName": "Deluxe Executive Suite",
     "paymentMethod": "Stripe Card",
@@ -110,7 +240,7 @@
   },
   {
     "id": "BK-16324",
-    "status": "Checked-In",
+    "status": "Checked-Out",
     "createdAt": "2026-08-25T18:28:07.854Z",
     "hotelId": "h1",
     "hotelName": "The Grand Azure Resort & Spa",
@@ -232,7 +362,7 @@
   },
   {
     "id": "BK-15862",
-    "status": "Confirmed",
+    "status": "Checked-Out",
     "createdAt": "2026-08-25T17:06:53.903Z",
     "hotelId": "h1",
     "hotelName": "The Grand Azure Resort & Spa",
@@ -266,7 +396,7 @@
   },
   {
     "id": "BK-28931",
-    "status": "Confirmed",
+    "status": "Checked-Out",
     "createdAt": "2026-08-25T17:03:01.631Z",
     "hotelId": "h3",
     "hotelName": "The Ritz Horizon Tower",
@@ -300,7 +430,7 @@
   },
   {
     "id": "BK-81785",
-    "status": "Checked-In",
+    "status": "Checked-Out",
     "createdAt": "2026-08-25T16:11:22.724Z",
     "hotelId": "h3",
     "hotelName": "The Ritz Horizon Tower",
@@ -457,7 +587,7 @@
   },
   {
     "id": "BK-55500",
-    "status": "Checked-In",
+    "status": "Checked-Out",
     "createdAt": "2026-08-25T00:53:31.927Z",
     "hotelId": "h2",
     "hotelName": "Overwater Coral Sanctuary",
