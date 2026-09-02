@@ -40,6 +40,7 @@ router.get('/', async (req, res) => {
 
 // POST create new booking
 router.post('/', async (req, res) => {
+  await connectDatabase();
   const bookings = readData('bookings.json');
   const { roomId, roomName, checkIn, checkOut } = req.body;
 
@@ -240,6 +241,7 @@ router.post('/', async (req, res) => {
 
 // PUT update booking
 router.put('/:id', async (req, res) => {
+  await connectDatabase();
   const bookings = readData('bookings.json');
   const index = bookings.findIndex(b => b.id === req.params.id);
   if (index === -1) return res.status(404).json({ error: 'Booking not found' });
@@ -263,6 +265,7 @@ router.put('/:id', async (req, res) => {
 
 // PUT update booking status (Persists directly to MongoDB Atlas)
 router.put('/:id/status', async (req, res) => {
+  await connectDatabase();
   const { id } = req.params;
   const { status } = req.body;
 
@@ -297,6 +300,7 @@ router.put('/:id/status', async (req, res) => {
 
 // DELETE booking (Deletes from MongoDB Atlas & JSON)
 router.delete('/:id', async (req, res) => {
+  await connectDatabase();
   const { id } = req.params;
 
   if (mongoose.connection.readyState === 1) {
@@ -313,6 +317,7 @@ router.delete('/:id', async (req, res) => {
 
 // PUT extend stay
 router.put('/:id/extend', async (req, res) => {
+  await connectDatabase();
   const bookings = readData('bookings.json');
   const index = bookings.findIndex(b => b.id === req.params.id);
   if (index === -1) {
@@ -372,6 +377,7 @@ router.put('/:id/extend', async (req, res) => {
 
 // PUT switch room / upgrade suite
 router.put('/:id/switch-room', async (req, res) => {
+  await connectDatabase();
   const bookings = readData('bookings.json');
   const index = bookings.findIndex(b => b.id === req.params.id);
   if (index === -1) return res.status(404).json({ error: 'Booking not found' });

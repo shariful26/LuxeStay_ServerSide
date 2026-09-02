@@ -37,6 +37,7 @@ router.get('/', async (req, res) => {
 
 // POST new customer review
 router.post('/', async (req, res) => {
+  await connectDatabase();
   try {
     const {
       hotelId,
@@ -110,6 +111,7 @@ router.post('/', async (req, res) => {
 
 // POST reply to review
 router.post('/:id/reply', async (req, res) => {
+  await connectDatabase();
   try {
     if (mongoose.connection.readyState === 1) {
       await Review.findOneAndUpdate({ id: req.params.id }, { $set: { partnerReply: req.body.reply, reply: req.body.reply } });
@@ -128,6 +130,7 @@ router.post('/:id/reply', async (req, res) => {
 
 // PATCH review status and visibility (public, only_me, approved, rejected)
 router.patch('/:id/status', async (req, res) => {
+  await connectDatabase();
   const { status, visibility } = req.body;
   const updates = {};
   if (status !== undefined) updates.status = status;
@@ -150,6 +153,7 @@ router.patch('/:id/status', async (req, res) => {
 
 // DELETE review
 router.delete('/:id', async (req, res) => {
+  await connectDatabase();
   try {
     if (mongoose.connection.readyState === 1) {
       await Review.findOneAndDelete({ id: req.params.id });
