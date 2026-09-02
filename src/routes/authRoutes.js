@@ -230,7 +230,8 @@ router.post('/login', async (req, res) => {
     const cleanEmail = String(email).trim().toLowerCase();
     const targetRole = role || 'customer';
 
-    // 1. Check Live MongoDB Atlas first (gets live updated profile, avatar, etc.)
+    // 1. Connect to database and search MongoDB Atlas first for the real live user!
+    await connectDatabase();
     let userObj = null;
     if (mongoose.connection.readyState === 1) {
       try {
@@ -238,13 +239,13 @@ router.post('/login', async (req, res) => {
       } catch (findErr) {}
     }
 
-    // 2. If not found in Atlas yet or connecting, check local JSON
+    // 2. Fallback to local JSON if not connected or not found in Atlas
     if (!userObj) {
       const existingUsers = readData('users.json') || [];
       userObj = existingUsers.find(u => u && u.email && u.email.toLowerCase() === cleanEmail);
     }
 
-    // 3. Pre-seeded high-speed demo accounts fallback
+    // 3. Pre-seeded high-speed demo accounts fallback only if completely new
     if (!userObj && DEMO_USERS[cleanEmail]) {
       const demo = DEMO_USERS[cleanEmail];
       const defaultHash = await bcrypt.hash('123456', 6);
@@ -262,18 +263,8 @@ router.post('/login', async (req, res) => {
       const existingUsers = readData('users.json') || [];
       existingUsers.unshift(userObj);
       writeData('users.json', existingUsers);
-    }
-
-    // 4. Final attempt to query Atlas with timeout if needed
-    if (!userObj) {
-      await connectDatabase();
       if (mongoose.connection.readyState === 1) {
-        try {
-          userObj = await Promise.race([
-            User.findOne({ email: cleanEmail }).lean(),
-            new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 2500))
-          ]);
-        } catch (e) {}
+        User.create(userObj).catch(() => {});
       }
     }
 
