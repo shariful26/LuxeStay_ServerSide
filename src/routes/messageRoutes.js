@@ -6,23 +6,43 @@ import { connectDatabase } from '../config/db.js';
 
 const router = express.Router();
 
+// Resilient In-Memory cache for live serverless messages
+let inMemoryMessages = null;
+
+const getMessagesStore = () => {
+  if (!inMemoryMessages) {
+    inMemoryMessages = readData('messages.json') || [];
+  }
+  return inMemoryMessages;
+};
+
 // GET all messages
 router.get('/', async (req, res) => {
   await connectDatabase();
-  let messages = [];
+  let dbMessages = [];
   try {
     if (mongoose.connection.readyState === 1) {
-      messages = await Message.find({}).sort({ createdAt: 1 }).lean();
+      dbMessages = await Message.find({}).sort({ createdAt: 1 }).lean();
     }
   } catch (err) {
     // safe fallback
   }
 
-  if (!messages || messages.length === 0) {
-    messages = readData('messages.json');
+  const localStore = getMessagesStore();
+
+  if (dbMessages && dbMessages.length > 0) {
+    // Merge any newer in-memory messages with DB messages
+    const dbMap = new Map(dbMessages.map(m => [m.id, m]));
+    localStore.forEach(m => {
+      if (!dbMap.has(m.id)) {
+        dbMessages.push(m);
+      }
+    });
+    inMemoryMessages = dbMessages;
+    return res.json(dbMessages);
   }
 
-  res.json(messages);
+  res.json(localStore);
 });
 
 // POST send new message
@@ -43,6 +63,11 @@ router.post('/', async (req, res) => {
     createdAt: new Date()
   };
 
+  // Push to in-memory store immediately
+  const store = getMessagesStore();
+  store.push(newMessage);
+
+  // Background persistence to MongoDB Atlas
   try {
     if (mongoose.connection.readyState === 1) {
       const mongoMsg = new Message(newMessage);
@@ -52,11 +77,7 @@ router.post('/', async (req, res) => {
     // safe fallback
   }
 
-  // Also write to local JSON file for fallback
-  const messages = readData('messages.json');
-  messages.push(newMessage);
-  writeData('messages.json', messages);
-
+  writeData('messages.json', store);
   res.status(201).json(newMessage);
 });
 
@@ -79,10 +100,10 @@ router.put('/read', async (req, res) => {
     // safe fallback
   }
 
-  const messages = readData('messages.json');
+  const store = getMessagesStore();
   let updated = false;
 
-  messages.forEach(msg => {
+  store.forEach(msg => {
     if (String(msg.senderId) === String(senderId) && String(msg.recipientId) === String(recipientId) && !msg.read) {
       msg.read = true;
       updated = true;
@@ -90,7 +111,7 @@ router.put('/read', async (req, res) => {
   });
 
   if (updated) {
-    writeData('messages.json', messages);
+    writeData('messages.json', store);
   }
 
   res.json({ success: true, message: 'Messages marked as read' });
