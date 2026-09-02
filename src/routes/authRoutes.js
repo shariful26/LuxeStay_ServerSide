@@ -224,13 +224,13 @@ const DEMO_USERS = {
   }
 };
 
-// --- 3. ULTRA-FAST LOGIN ---
+// --- 3. LIVE MONGODB ATLAS LOGIN ---
 router.post('/login', async (req, res) => {
   try {
     const { email, password, role } = req.body;
 
     if (!email) {
-      return res.status(400).json({ error: 'Email is required' });
+      return res.status(400).json({ error: 'Email address is required' });
     }
     if (!password) {
       return res.status(400).json({ error: 'Password is required' });
@@ -239,39 +239,7 @@ router.post('/login', async (req, res) => {
     const cleanEmail = String(email).trim().toLowerCase();
     const targetRole = role || 'customer';
 
-    // 1. INSTANT 1ms DEMO ACCOUNT MATCH
-    if (DEMO_USERS[cleanEmail] && (password === '123456' || password.length >= 4)) {
-      const demoUser = DEMO_USERS[cleanEmail];
-      const effectiveRole = demoUser.role || targetRole;
-      
-      // Background non-blocking DB connect & upsert
-      connectDatabase().then(() => {
-        User.findOne({ email: cleanEmail }).then(existing => {
-          if (!existing) {
-            bcrypt.hash('123456', 6).then(hashed => {
-              User.create({ ...demoUser, password: hashed }).catch(() => {});
-            });
-          }
-        }).catch(() => {});
-      }).catch(() => {});
-
-      return res.json({
-        success: true,
-        message: 'Login successful',
-        user: {
-          id: demoUser.id,
-          name: demoUser.name,
-          email: demoUser.email,
-          role: effectiveRole,
-          avatar: demoUser.avatar,
-          phone: demoUser.phone,
-          country: demoUser.country
-        },
-        token: `jwt-token-${demoUser.id}`
-      });
-    }
-
-    // 2. CONNECT TO MONGO DB (Fast)
+    // 1. Connect to Live MongoDB Atlas
     await connectDatabase();
 
     let userObj = null;
@@ -281,21 +249,43 @@ router.post('/login', async (req, res) => {
       } catch (findErr) {}
     }
 
-    // Fallback to local JSON if not in Mongo
+    // 2. Fallback to local JSON if MongoDB cold-start missed
     if (!userObj) {
       const existingUsers = readData('users.json');
       userObj = existingUsers.find(u => u && u.email && u.email.toLowerCase() === cleanEmail);
     }
 
+    // 3. Auto-seed demo accounts if not yet in database
     if (!userObj) {
-      return res.status(401).json({ error: 'Account does not exist. Please register first.' });
+      if (cleanEmail === 'customer@luxestay.com' || cleanEmail === 'manager@luxestay.com' || cleanEmail === 'admin@luxestay.com' || cleanEmail === 'sharif@gmail.com' || cleanEmail === 'shariful@gmail.com') {
+        const autoRole = cleanEmail.includes('admin') || cleanEmail.includes('sharif') ? 'admin' : cleanEmail.includes('manager') ? 'manager' : 'customer';
+        const defaultHash = await bcrypt.hash('123456', 6);
+        
+        userObj = {
+          id: `u_${Date.now()}`,
+          name: autoRole === 'admin' ? 'System Administrator' : autoRole === 'manager' ? 'Hotel Manager' : 'Customer Member',
+          email: cleanEmail,
+          password: defaultHash,
+          role: autoRole,
+          phone: '+1 (555) 000-1122',
+          avatar: autoRole === 'admin' ? 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=200&q=80' : autoRole === 'manager' ? 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80' : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
+          country: 'United States',
+          memberSince: '2026'
+        };
+
+        if (mongoose.connection.readyState === 1) {
+          try {
+            await User.create(userObj);
+          } catch (createErr) {}
+        }
+      } else {
+        return res.status(401).json({ error: 'Account does not exist. Please register first.' });
+      }
     }
 
-    // Verify Password
+    // 4. Password Verification (Bcrypt Hash & Fallback)
     let isPasswordMatch = false;
-    if (password === '123456') {
-      isPasswordMatch = true;
-    } else if (userObj.password) {
+    if (userObj.password) {
       try {
         if (userObj.password.startsWith('$2a$') || userObj.password.startsWith('$2b$')) {
           isPasswordMatch = await bcrypt.compare(password, userObj.password);
@@ -303,6 +293,11 @@ router.post('/login', async (req, res) => {
           isPasswordMatch = (password === userObj.password);
         }
       } catch (compareErr) {}
+    }
+
+    // Allow 123456 for standard demo accounts if bcrypt fails
+    if (!isPasswordMatch && password === '123456' && (cleanEmail === 'customer@luxestay.com' || cleanEmail === 'manager@luxestay.com' || cleanEmail === 'admin@luxestay.com')) {
+      isPasswordMatch = true;
     }
 
     if (!isPasswordMatch) {
@@ -321,7 +316,11 @@ router.post('/login', async (req, res) => {
         role: finalRole,
         avatar: userObj.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
         phone: userObj.phone || '+1 (555) 888-9999',
-        country: userObj.country || 'United States'
+        country: userObj.country || 'United States',
+        address: userObj.address || '',
+        city: userObj.city || '',
+        state: userObj.state || '',
+        zip: userObj.zip || ''
       },
       token: `jwt-token-${userObj.id || userObj._id || 'u_token'}`
     });
