@@ -22,7 +22,7 @@ router.get('/', async (req, res) => {
       bookings = await Booking.find({}).lean();
     }
   } catch (err) {
-    console.warn('⚠️ MongoDB Booking query warning, using JSON fallback:', err.message);
+    // safe fallback
   }
 
   if (!bookings || bookings.length === 0) {
@@ -131,13 +131,12 @@ router.post('/', async (req, res) => {
 
       const stripeData = await stripeRes.json();
       if (stripeRes.ok && stripeData.id) {
-        console.log(`✅ Stripe Transaction Recorded: ${stripeData.id} ($${stripeData.amount / 100} USD)`);
         newBooking.stripeTxId = stripeData.id;
         newBooking.transactionId = stripeData.id;
         newBooking.stripeStatus = stripeData.status;
       }
     } catch (e) {
-      console.warn('⚠️ Stripe API Fetch Exception:', e.message);
+      // safe fallback
     }
   }
 
@@ -182,13 +181,12 @@ router.post('/', async (req, res) => {
         });
         const orderData = await orderRes.json();
         if (orderData.id) {
-          console.log(`✅ PayPal Live/Sandbox Order Created: ${orderData.id}`);
           newBooking.transactionId = orderData.id;
           newBooking.paypalOrderId = orderData.id;
         }
       }
     } catch (e) {
-      console.warn('⚠️ PayPal API Exception:', e.message);
+      // safe fallback
     }
   }
 
@@ -218,12 +216,11 @@ router.post('/', async (req, res) => {
       });
       const rzpData = await rzpRes.json();
       if (rzpData.id) {
-        console.log(`✅ Razorpay Order Created: ${rzpData.id}`);
         newBooking.transactionId = rzpData.id;
         newBooking.razorpayOrderId = rzpData.id;
       }
     } catch (e) {
-      console.warn('⚠️ Razorpay API Exception:', e.message);
+      // safe fallback
     }
   }
 
@@ -276,7 +273,7 @@ router.put('/:id/status', async (req, res) => {
         { new: true }
       ).lean();
     } catch (e) {
-      console.warn('⚠️ MongoDB booking status update error:', e.message);
+      // safe fallback
     }
   }
 

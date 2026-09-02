@@ -26,7 +26,7 @@ router.post('/register', async (req, res) => {
       try {
         mongoExistingUser = await User.findOne({ email: cleanEmail });
       } catch (findErr) {
-        console.warn('⚠️ MongoDB Find Error on Register:', findErr.message);
+        // safe fallback
       }
     }
 
@@ -55,7 +55,7 @@ router.post('/register', async (req, res) => {
         const freshUser = new User(newUserPayload);
         createdUserDoc = await freshUser.save();
       } catch (saveErr) {
-        console.error('❌ Error saving user to MongoDB:', saveErr.message);
+        // safe fallback
       }
     }
     if (!createdUserDoc) createdUserDoc = newUserPayload;
@@ -84,7 +84,6 @@ router.post('/register', async (req, res) => {
       token: `jwt-token-${createdUserDoc.id || createdUserDoc._id}`
     });
   } catch (err) {
-    console.error('Registration Error:', err);
     res.status(500).json({ error: 'Server error during registration' });
   }
 });
@@ -107,7 +106,7 @@ router.post('/google', async (req, res) => {
       try {
         mongoUserDoc = await User.findOne({ email: cleanEmail });
       } catch (findErr) {
-        console.warn('⚠️ MongoDB Find Warning:', findErr.message);
+        // safe fallback
       }
     }
 
@@ -169,7 +168,6 @@ router.post('/google', async (req, res) => {
       token: `jwt-token-${finalUser.id || finalUser._id || Date.now()}`
     });
   } catch (err) {
-    console.error('Google Auth Route Error:', err);
     res.status(500).json({ error: 'Server error during Google authentication' });
   }
 });
@@ -194,7 +192,7 @@ router.post('/login', async (req, res) => {
       try {
         mongoUserDoc = await User.findOne({ email: cleanEmail });
       } catch (findErr) {
-        console.warn('⚠️ MongoDB Find Error on Login:', findErr.message);
+        // safe fallback
       }
     }
 
@@ -247,7 +245,7 @@ router.post('/login', async (req, res) => {
           isPasswordMatch = (password === userObj.password);
         }
       } catch (compareErr) {
-        console.error('Password comparison error:', compareErr);
+        // safe comparison
       }
     }
 
@@ -278,7 +276,6 @@ router.post('/login', async (req, res) => {
       token: `jwt-token-${finalUser.id || finalUser._id || 'u_admin'}`
     });
   } catch (err) {
-    console.error('Server login error:', err);
     res.status(500).json({ error: 'Server login error' });
   }
 });
@@ -329,7 +326,6 @@ router.post('/forgot-password', async (req, res) => {
       role: user.role
     });
   } catch (err) {
-    console.error('Error in forgot-password:', err);
     return res.status(500).json({ error: 'Server error generating reset code' });
   }
 });
@@ -378,7 +374,7 @@ router.post('/reset-password', async (req, res) => {
       try {
         await User.updateOne({ email: cleanEmail }, { $set: { password: hashedPassword } }, { upsert: true });
       } catch (e) {
-        console.warn('MongoDB update notice:', e.message);
+        // safe update
       }
     }
 
@@ -392,7 +388,6 @@ router.post('/reset-password', async (req, res) => {
       user: { id: users[index].id, name: users[index].name, email: users[index].email, role: users[index].role }
     });
   } catch (err) {
-    console.error('Reset Password API Exception:', err);
     return res.status(500).json({ error: err.message || 'Server error resetting password' });
   }
 });

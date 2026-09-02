@@ -18,10 +18,18 @@ router.get('/', async (req, res) => {
     reviews = readData('reviews.json') || [];
   }
 
-  const { hotelId } = req.query;
+  const { hotelId, role, scope } = req.query;
+
+  // Filter by hotelId if specified
   if (hotelId) {
-    return res.json(reviews.filter(r => String(r.hotelId) === String(hotelId)));
+    reviews = reviews.filter(r => String(r.hotelId) === String(hotelId));
   }
+
+  // If public guest view (not admin or manager), hide 'only_me' / 'private' / 'rejected' reviews
+  if (role !== 'admin' && role !== 'manager' && scope !== 'all') {
+    reviews = reviews.filter(r => r.visibility !== 'only_me' && r.visibility !== 'private' && r.status !== 'rejected');
+  }
+
   res.json(reviews);
 });
 
@@ -37,7 +45,8 @@ router.post('/', async (req, res) => {
       rating,
       categories,
       title,
-      comment
+      comment,
+      visibility
     } = req.body;
 
     const newReview = {
@@ -60,14 +69,16 @@ router.post('/', async (req, res) => {
       date: new Date().toISOString().split('T')[0],
       verifiedStay: true,
       helpfulCount: 0,
-      partnerReply: null
+      partnerReply: null,
+      status: 'approved',
+      visibility: visibility || 'public'
     };
 
     if (mongoose.connection.readyState === 1) {
       try {
         await Review.create(newReview);
       } catch (dbErr) {
-        console.warn('MongoDB review write error, fallback to JSON:', dbErr.message);
+        // safe fallback
       }
     }
 
@@ -91,7 +102,6 @@ router.post('/', async (req, res) => {
 
     res.status(201).json(newReview);
   } catch (error) {
-    console.error('Error posting review:', error);
     res.status(500).json({ error: 'Failed to submit review' });
   }
 });
@@ -112,6 +122,42 @@ router.post('/:id/reply', async (req, res) => {
   reviews[index].partnerReply = req.body.reply || '';
   writeData('reviews.json', reviews);
   res.json(reviews[index]);
+});
+
+// PATCH review status and visibility (public, only_me, approved, rejected)
+router.patch('/:id/status', async (req, res) => {
+  const { status, visibility } = req.body;
+  const updates = {};
+  if (status !== undefined) updates.status = status;
+  if (visibility !== undefined) updates.visibility = visibility;
+
+  try {
+    if (mongoose.connection.readyState === 1) {
+      await Review.findOneAndUpdate({ id: req.params.id }, { $set: updates });
+    }
+  } catch (err) {}
+
+  const reviews = readData('reviews.json') || [];
+  const index = reviews.findIndex(r => r.id === req.params.id);
+  if (index === -1) return res.status(404).json({ error: 'Review not found' });
+
+  reviews[index] = { ...reviews[index], ...updates };
+  writeData('reviews.json', reviews);
+  res.json(reviews[index]);
+});
+
+// DELETE review
+router.delete('/:id', async (req, res) => {
+  try {
+    if (mongoose.connection.readyState === 1) {
+      await Review.findOneAndDelete({ id: req.params.id });
+    }
+  } catch (err) {}
+
+  const reviews = readData('reviews.json') || [];
+  const filtered = reviews.filter(r => r.id !== req.params.id);
+  writeData('reviews.json', filtered);
+  res.json({ success: true, message: 'Review deleted successfully' });
 });
 
 export default router;

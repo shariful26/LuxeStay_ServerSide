@@ -20,7 +20,6 @@ export const readData = (filename) => {
     const raw = fs.readFileSync(filePath, 'utf8');
     return JSON.parse(raw);
   } catch (err) {
-    console.error(`[FileDB] Error reading ${filename}:`, err.message);
     return [];
   }
 };
@@ -37,7 +36,6 @@ export const writeData = (filename, data) => {
     fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf8');
     return true;
   } catch (err) {
-    console.error(`[FileDB] Error writing ${filename}:`, err.message);
     return false;
   }
 };

@@ -78,13 +78,12 @@ app.use((req, res) => {
 
 // Global Error Handler
 app.use((err, req, res, next) => {
-  console.error('[Server Error]', err.stack);
   res.status(500).json({ error: 'Internal server error occurred.' });
 });
 
 // Start Express Server
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 LuxeStay Pro Server running on http://127.0.0.1:${PORT}`);
+  console.log(`LuxeStay Pro Server running on http://127.0.0.1:${PORT}`);
 });
 
 export default app;

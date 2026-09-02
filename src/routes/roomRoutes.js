@@ -13,7 +13,7 @@ router.get('/', async (req, res) => {
       rooms = await Room.find({}).lean();
     }
   } catch (err) {
-    console.warn('⚠️ MongoDB Room query warning:', err.message);
+    // safe fallback
   }
 
   if (!rooms || rooms.length === 0) {
@@ -85,7 +85,7 @@ router.post('/', async (req, res) => {
       await mongoRoom.save();
     }
   } catch (err) {
-    console.warn('⚠️ MongoDB Room save warning:', err.message);
+    // safe fallback
   }
 
   const rooms = readData('rooms.json');
@@ -135,7 +135,7 @@ router.put('/:id/housekeeping', async (req, res) => {
         { new: true }
       ).lean();
     } catch (err) {
-      console.warn('⚠️ MongoDB Room housekeeping update warning:', err.message);
+      // safe fallback
     }
   }
 

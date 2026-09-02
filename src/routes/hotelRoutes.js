@@ -13,7 +13,7 @@ router.get('/', async (req, res) => {
       hotels = await Hotel.find({}).lean();
     }
   } catch (err) {
-    console.warn('⚠️ MongoDB Hotel query warning, using JSON fallback:', err.message);
+    // safe fallback
   }
 
   if (!hotels || hotels.length === 0) {
@@ -141,7 +141,7 @@ router.post('/', async (req, res) => {
       const mongoHotel = new Hotel(newHotel);
       await mongoHotel.save();
     } catch (e) {
-      console.warn('MongoDB Hotel Save Warning:', e.message);
+      // safe fallback
     }
   }
 

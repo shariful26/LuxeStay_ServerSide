@@ -13,7 +13,7 @@ router.get('/', async (req, res) => {
       messages = await Message.find({}).sort({ createdAt: 1 }).lean();
     }
   } catch (err) {
-    console.warn('⚠️ MongoDB Message query warning:', err.message);
+    // safe fallback
   }
 
   if (!messages || messages.length === 0) {
@@ -46,7 +46,7 @@ router.post('/', async (req, res) => {
       await mongoMsg.save();
     }
   } catch (err) {
-    console.warn('⚠️ MongoDB Message save warning:', err.message);
+    // safe fallback
   }
 
   // Also write to local JSON file for fallback
@@ -72,7 +72,7 @@ router.put('/read', async (req, res) => {
       );
     }
   } catch (err) {
-    console.warn('⚠️ MongoDB Message update warning:', err.message);
+    // safe fallback
   }
 
   const messages = readData('messages.json');

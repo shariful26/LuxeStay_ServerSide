@@ -106,7 +106,6 @@ router.put('/profile', async (req, res) => {
       user: returnUser
     });
   } catch (err) {
-    console.error('Profile Update Error:', err);
     res.status(500).json({ error: 'Server error updating profile' });
   }
 });
@@ -168,7 +167,6 @@ router.put('/change-password', async (req, res) => {
       message: 'Password encrypted and updated successfully'
     });
   } catch (err) {
-    console.error('Server error updating password:', err);
     res.status(500).json({ error: 'Server error updating password' });
   }
 });

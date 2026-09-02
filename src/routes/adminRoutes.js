@@ -58,11 +58,10 @@ router.put('/payment-settings', async (req, res) => {
   };
 
   writeData('payment-settings.json', newSettings);
-  console.log('✅ Super Admin updated payment gateway settings mode:', newSettings.mode);
 
   res.json({
     success: true,
-    message: `Payment settings saved! Platform environment mode is now: ${newSettings.mode === 'live' ? '🚀 LIVE PRODUCTION MODE' : '🧪 SANDBOX TEST MODE'}`,
+    message: `Payment settings saved! Platform environment mode is now: ${newSettings.mode === 'live' ? 'LIVE PRODUCTION MODE' : 'SANDBOX TEST MODE'}`,
     settings: newSettings
   });
 });

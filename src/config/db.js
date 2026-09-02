@@ -27,15 +27,13 @@ export const connectDatabase = async () => {
     };
 
     cached.promise = mongoose.connect(MONGODB_URI, opts).then((m) => {
-      console.log('✅ [Database] MongoDB Atlas Connected Successfully (Live Persistence Mode)!');
       if (!cached.seeded) {
         cached.seeded = true;
-        // Run seeder asynchronously in background so it never slows down user API responses
+        // Run seeder asynchronously in background
         seedMongoDBDatabase().catch(() => {});
       }
       return m;
     }).catch(err => {
-      console.error('❌ [Database] MongoDB Connection Error:', err.message);
       cached.promise = null;
       return null;
     });
@@ -44,11 +42,3 @@ export const connectDatabase = async () => {
   cached.conn = await cached.promise;
   return cached.conn;
 };
-
-mongoose.connection.on('connected', () => {
-  console.log('🟢 [Database] Mongoose event: CONNECTED');
-});
-
-mongoose.connection.on('error', (err) => {
-  console.error('🔴 [Database] Mongoose error:', err.message);
-});

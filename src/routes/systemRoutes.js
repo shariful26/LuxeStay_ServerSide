@@ -44,7 +44,7 @@ router.get('/db-status', async (req, res) => {
       collectionsSummary.payouts = await Payout.countDocuments({});
     }
   } catch (err) {
-    console.error('Error fetching DB status counts:', err.message);
+    // safe fallback
   }
 
   res.json({
