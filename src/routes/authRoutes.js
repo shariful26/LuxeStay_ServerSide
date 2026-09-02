@@ -59,15 +59,16 @@ const DEMO_USERS = {
   }
 };
 
-// In-Memory Fast Lookup Helper
+// In-Memory Fast Lookup Helper - Preserves user avatar (custom URLs, uploads & base64)
 const sanitizeAvatar = (avatar, role = 'customer') => {
-  if (!avatar || avatar.startsWith('data:') || avatar.length > 500) {
-    if (role === 'admin') return 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=200&q=80';
-    if (role === 'manager') return 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80';
-    return 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80';
+  if (avatar && typeof avatar === 'string' && avatar.trim().length > 0) {
+    return avatar.trim();
   }
-  return avatar;
+  if (role === 'admin') return 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=200&q=80';
+  if (role === 'manager') return 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80';
+  return 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80';
 };
+
 
 // --- 1. REGISTER ---
 router.post('/register', async (req, res) => {
