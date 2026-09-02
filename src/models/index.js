@@ -10,3 +10,6 @@ export { Payout } from './Payout.js';
 export { Message } from './Message.js';
 export { Review } from './Review.js';
 export { Inventory } from './Inventory.js';
+export { Concierge } from './Concierge.js';
+export { ConciergeRequest } from './ConciergeRequest.js';
+export { Setting } from './Setting.js';

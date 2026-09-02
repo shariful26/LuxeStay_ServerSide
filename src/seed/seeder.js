@@ -8,7 +8,13 @@ import {
   User, 
   Blog, 
   Transfer, 
-  Payout 
+  Payout,
+  Booking,
+  Review,
+  Inventory,
+  Concierge,
+  ConciergeRequest,
+  Setting
 } from '../models/index.js';
 
 let isSeedingCompleted = false;
@@ -82,6 +88,50 @@ export async function seedMongoDBDatabase() {
     const payouts = readData('payouts.json');
     if (payoutCount === 0 && payouts.length > 0) {
       await Payout.insertMany(payouts);
+    }
+
+    // 9. Bookings
+    const bookingCount = await Booking.countDocuments({});
+    const bookings = readData('bookings.json');
+    if (bookingCount === 0 && bookings.length > 0) {
+      await Booking.insertMany(bookings);
+    }
+
+    // 10. Reviews
+    const reviewCount = await Review.countDocuments({});
+    const reviews = readData('reviews.json');
+    if (reviewCount === 0 && reviews.length > 0) {
+      await Review.insertMany(reviews);
+    }
+
+    // 11. Inventory
+    const invCount = await Inventory.countDocuments({});
+    const items = readData('inventory.json');
+    if (invCount === 0 && items.length > 0) {
+      await Inventory.insertMany(items);
+    }
+
+    // 12. Concierge Staff
+    const staffCount = await Concierge.countDocuments({});
+    const staff = readData('concierge.json');
+    if (staffCount === 0 && staff.length > 0) {
+      await Concierge.insertMany(staff);
+    }
+
+    // 13. Concierge Requests
+    const reqCount = await ConciergeRequest.countDocuments({});
+    const requests = readData('concierge-requests.json');
+    if (reqCount === 0 && requests.length > 0) {
+      await ConciergeRequest.insertMany(requests);
+    }
+
+    // 14. Settings
+    const settingDoc = await Setting.findOne({ id: 'payment_settings' });
+    if (!settingDoc) {
+      const setJson = readData('payment-settings.json');
+      if (setJson && setJson.mode) {
+        await Setting.create({ id: 'payment_settings', ...setJson });
+      }
     }
   } catch (err) {
     // safe fallback
