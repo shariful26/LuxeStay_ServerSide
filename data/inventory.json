@@ -3,24 +3,24 @@
     "id": "inv_1",
     "name": "Bath Towels",
     "category": "Refreshments",
-    "availability": "Available",
+    "availability": "Low",
     "stock": 120,
-    "reorderLimit": 50
+    "reorderLimit": 505
   },
   {
     "id": "inv_2",
     "name": "Shampoo Bottles",
-    "category": "Toiletries",
-    "availability": "Low",
-    "stock": 20,
-    "reorderLimit": 100
+    "category": "Linen",
+    "availability": "Available",
+    "stock": 470,
+    "reorderLimit": 10
   },
   {
     "id": "inv_3",
     "name": "Coffee Pods",
     "category": "Refreshments",
-    "availability": "Out of Stock",
-    "stock": 0,
+    "availability": "Available",
+    "stock": 150,
     "reorderLimit": 200
   },
   {
@@ -29,7 +29,7 @@
     "category": "Electronics",
     "availability": "Available",
     "stock": 500,
-    "reorderLimit": 100
+    "reorderLimit": 99
   },
   {
     "id": "inv_5",

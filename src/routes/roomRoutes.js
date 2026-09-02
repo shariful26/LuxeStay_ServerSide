@@ -114,6 +114,49 @@ router.put('/:id', async (req, res) => {
   res.json({ message: 'Room updated' });
 });
 
+// PUT update housekeeping status & priority
+router.put('/:id/housekeeping', async (req, res) => {
+  const { id } = req.params;
+  const { housekeepingStatus, housekeepingPriority, housekeepingNotes } = req.body;
+
+  let mongoUpdated = null;
+  if (mongoose.connection.readyState === 1) {
+    try {
+      mongoUpdated = await Room.findOneAndUpdate(
+        { id },
+        { 
+          $set: { 
+            housekeepingStatus, 
+            housekeepingPriority, 
+            housekeepingNotes,
+            updatedAt: new Date().toISOString()
+          } 
+        },
+        { new: true }
+      ).lean();
+    } catch (err) {
+      console.warn('⚠️ MongoDB Room housekeeping update warning:', err.message);
+    }
+  }
+
+  let rooms = readData('rooms.json');
+  const index = rooms.findIndex(r => r.id === id);
+  if (index !== -1) {
+    rooms[index] = { 
+      ...rooms[index], 
+      housekeepingStatus: housekeepingStatus || rooms[index].housekeepingStatus,
+      housekeepingPriority: housekeepingPriority || rooms[index].housekeepingPriority,
+      housekeepingNotes: housekeepingNotes !== undefined ? housekeepingNotes : rooms[index].housekeepingNotes,
+      updatedAt: new Date().toISOString()
+    };
+    writeData('rooms.json', rooms);
+    return res.json(mongoUpdated || rooms[index]);
+  }
+
+  if (mongoUpdated) return res.json(mongoUpdated);
+  res.json({ id, housekeepingStatus, housekeepingPriority, housekeepingNotes });
+});
+
 // DELETE room
 router.delete('/:id', async (req, res) => {
   try {
