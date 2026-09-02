@@ -6,37 +6,19 @@ import { readData, writeData } from '../utils/fileDb.js';
 
 const router = express.Router();
 
-// GET all users (Live MongoDB with JSON fallback)
-router.get('/', async (req, res) => {
-  let users = [];
-  try {
-    if (mongoose.connection.readyState === 1) {
-      users = await User.find({}).lean();
-    }
-  } catch (err) {
-    // safe fallback
-  }
-
-  if (!users || users.length === 0) {
-    users = readData('users.json');
-  }
-
-  // Sanitize out sensitive password hashes
-  const safeUsers = users.map(u => {
-    const { password, ...safeUser } = u;
-    return safeUser;
-  });
-
-  res.json(safeUsers);
+// GET all users
+router.get('/', (req, res) => {
+  const users = readData('users.json');
+  res.json(users);
 });
 
 // POST new user
-router.post('/', async (req, res) => {
-  const cleanEmail = req.body.email ? String(req.body.email).trim().toLowerCase() : '';
+router.post('/', (req, res) => {
+  const users = readData('users.json');
   const newUser = {
     id: `u_${Date.now()}`,
     name: req.body.name || 'New Member',
-    email: cleanEmail,
+    email: req.body.email,
     phone: req.body.phone || '+1 (555) 000-0000',
     role: req.body.role || 'customer',
     country: req.body.country || 'United States',
@@ -44,14 +26,6 @@ router.post('/', async (req, res) => {
     memberSince: new Date().getFullYear().toString()
   };
 
-  if (mongoose.connection.readyState === 1) {
-    try {
-      const mongoUser = new User(newUser);
-      await mongoUser.save();
-    } catch (e) {}
-  }
-
-  const users = readData('users.json');
   users.unshift(newUser);
   writeData('users.json', users);
   res.status(201).json(newUser);
@@ -227,61 +201,28 @@ router.put('/:id', async (req, res) => {
 });
 
 // PUT update user role
-// PUT update user role
-router.put('/:id/role', async (req, res) => {
-  const targetRole = req.body.role;
-  if (mongoose.connection.readyState === 1) {
-    try {
-      await User.updateOne(
-        { $or: [{ id: req.params.id }, { _id: mongoose.isValidObjectId(req.params.id) ? req.params.id : null }] },
-        { $set: { role: targetRole } }
-      );
-    } catch (e) {}
-  }
-
+router.put('/:id/role', (req, res) => {
   let users = readData('users.json');
   const index = users.findIndex(u => u.id === req.params.id);
-  if (index !== -1) {
-    users[index].role = targetRole || users[index].role;
-    writeData('users.json', users);
-    return res.json(users[index]);
-  }
-  res.json({ success: true, message: 'Role updated' });
-});
+  if (index === -1) return res.status(404).json({ error: 'User not found' });
 
-// DELETE user by ID
-router.delete('/:id', async (req, res) => {
-  if (mongoose.connection.readyState === 1) {
-    try {
-      await User.deleteOne({
-        $or: [{ id: req.params.id }, { _id: mongoose.isValidObjectId(req.params.id) ? req.params.id : null }]
-      });
-    } catch (e) {}
-  }
-
-  let users = readData('users.json');
-  users = users.filter(u => u.id !== req.params.id);
+  users[index].role = req.body.role || users[index].role;
   writeData('users.json', users);
-  res.json({ success: true, message: 'User deleted successfully' });
+  res.json(users[index]);
 });
 
 // GET user by ID
 router.get('/:id', async (req, res) => {
   try {
-    let foundUser = null;
-    if (mongoose.connection.readyState === 1) {
-      try {
-        foundUser = await User.findOne({
-          $or: [{ id: req.params.id }, { _id: mongoose.isValidObjectId(req.params.id) ? req.params.id : null }]
-        }).lean();
-      } catch (e) {}
-    }
-
+    let users = readData('users.json');
+    let foundUser = users.find(u => u.id === req.params.id);
     if (!foundUser) {
-      let users = readData('users.json');
-      foundUser = users.find(u => u.id === req.params.id);
+      if (mongoose.connection.readyState === 1) {
+        try {
+          foundUser = await User.findOne({ id: req.params.id }).lean();
+        } catch (e) {}
+      }
     }
-
     if (!foundUser) return res.status(404).json({ error: 'User not found' });
     
     // Return user details without password hash
