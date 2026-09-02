@@ -97,20 +97,26 @@ router.post('/', async (req, res) => {
 
 // PUT update room
 router.put('/:id', async (req, res) => {
+  let updatedRoom = null;
   try {
     if (mongoose.connection.readyState === 1) {
-      await Room.findOneAndUpdate({ id: req.params.id }, { $set: req.body });
+      updatedRoom = await Room.findOneAndUpdate(
+        { $or: [{ id: req.params.id }, { _id: mongoose.isValidObjectId(req.params.id) ? req.params.id : null }, { slug: req.params.id }] },
+        { $set: req.body },
+        { new: true }
+      ).lean();
     }
   } catch (err) {}
 
   let rooms = readData('rooms.json');
-  const index = rooms.findIndex(r => r.id === req.params.id);
+  const index = rooms.findIndex(r => r.id === req.params.id || r.slug === req.params.id);
   if (index !== -1) {
     rooms[index] = { ...rooms[index], ...req.body };
     writeData('rooms.json', rooms);
-    return res.json(rooms[index]);
+    return res.json(updatedRoom || rooms[index]);
   }
 
+  if (updatedRoom) return res.json(updatedRoom);
   res.json({ message: 'Room updated' });
 });
 
@@ -123,7 +129,7 @@ router.put('/:id/housekeeping', async (req, res) => {
   if (mongoose.connection.readyState === 1) {
     try {
       mongoUpdated = await Room.findOneAndUpdate(
-        { id },
+        { $or: [{ id }, { _id: mongoose.isValidObjectId(id) ? id : null }] },
         { 
           $set: { 
             housekeepingStatus, 
@@ -161,12 +167,14 @@ router.put('/:id/housekeeping', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   try {
     if (mongoose.connection.readyState === 1) {
-      await Room.deleteOne({ id: req.params.id });
+      await Room.deleteOne({
+        $or: [{ id: req.params.id }, { _id: mongoose.isValidObjectId(req.params.id) ? req.params.id : null }, { slug: req.params.id }]
+      });
     }
   } catch (err) {}
 
   let rooms = readData('rooms.json');
-  rooms = rooms.filter(r => r.id !== req.params.id);
+  rooms = rooms.filter(r => r.id !== req.params.id && r.slug !== req.params.id);
   writeData('rooms.json', rooms);
 
   res.json({ success: true, message: 'Room deleted successfully' });

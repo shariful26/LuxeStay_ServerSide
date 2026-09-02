@@ -6,19 +6,37 @@ import { readData, writeData } from '../utils/fileDb.js';
 
 const router = express.Router();
 
-// GET all users
-router.get('/', (req, res) => {
-  const users = readData('users.json');
-  res.json(users);
+// GET all users (Live MongoDB with JSON fallback)
+router.get('/', async (req, res) => {
+  let users = [];
+  try {
+    if (mongoose.connection.readyState === 1) {
+      users = await User.find({}).lean();
+    }
+  } catch (err) {
+    // safe fallback
+  }
+
+  if (!users || users.length === 0) {
+    users = readData('users.json');
+  }
+
+  // Remove sensitive password hash from list
+  const safeUsers = users.map(u => {
+    const { password, ...safeUser } = u;
+    return safeUser;
+  });
+
+  res.json(safeUsers);
 });
 
 // POST new user
-router.post('/', (req, res) => {
-  const users = readData('users.json');
+router.post('/', async (req, res) => {
+  const cleanEmail = req.body.email ? String(req.body.email).trim().toLowerCase() : '';
   const newUser = {
     id: `u_${Date.now()}`,
     name: req.body.name || 'New Member',
-    email: req.body.email,
+    email: cleanEmail,
     phone: req.body.phone || '+1 (555) 000-0000',
     role: req.body.role || 'customer',
     country: req.body.country || 'United States',
@@ -26,6 +44,14 @@ router.post('/', (req, res) => {
     memberSince: new Date().getFullYear().toString()
   };
 
+  if (mongoose.connection.readyState === 1) {
+    try {
+      const mongoUser = new User(newUser);
+      await mongoUser.save();
+    } catch (e) {}
+  }
+
+  const users = readData('users.json');
   users.unshift(newUser);
   writeData('users.json', users);
   res.status(201).json(newUser);
@@ -39,10 +65,10 @@ router.put('/profile', async (req, res) => {
     if (mongoose.connection.readyState === 1) {
       try {
         dbUser = await User.findOneAndUpdate(
-          { $or: [{ id }, { email }] },
+          { $or: [{ id }, { _id: mongoose.isValidObjectId(id) ? id : null }, { email: email ? email.toLowerCase() : null }] },
           { name, email: email ? email.toLowerCase() : undefined, phone, country, avatar, address, city, state, zip },
           { new: true }
-        );
+        ).lean();
       } catch (e) {}
     }
 
@@ -94,9 +120,6 @@ router.put('/profile', async (req, res) => {
     const updatedUser = dbUser || users[index];
     let returnUser = updatedUser;
     if (returnUser) {
-      if (typeof returnUser.toObject === 'function') {
-        returnUser = returnUser.toObject();
-      }
       returnUser.id = returnUser.id || returnUser._id?.toString() || id;
     }
 
@@ -174,55 +197,97 @@ router.put('/change-password', async (req, res) => {
 // PUT update user by ID
 router.put('/:id', async (req, res) => {
   try {
-    let users = readData('users.json');
-    const index = users.findIndex(u => u.id === req.params.id);
-    if (index === -1) return res.status(404).json({ error: 'User not found' });
-
-    const { name, email, phone, country, role, avatar, password } = req.body;
-    if (name) users[index].name = name;
-    if (email) users[index].email = email.toLowerCase();
-    if (phone) users[index].phone = phone;
-    if (country) users[index].country = country;
-    if (role) users[index].role = role;
-    if (avatar) users[index].avatar = avatar;
-    if (password) users[index].password = password;
-
+    let mongoUpdated = null;
     if (mongoose.connection.readyState === 1) {
       try {
-        await User.updateOne({ id: req.params.id }, { $set: users[index] });
+        mongoUpdated = await User.findOneAndUpdate(
+          { $or: [{ id: req.params.id }, { _id: mongoose.isValidObjectId(req.params.id) ? req.params.id : null }] },
+          { $set: req.body },
+          { new: true }
+        ).lean();
       } catch (e) {}
     }
 
-    writeData('users.json', users);
-    res.json({ success: true, user: users[index] });
+    let users = readData('users.json');
+    const index = users.findIndex(u => u.id === req.params.id);
+    if (index === -1 && !mongoUpdated) return res.status(404).json({ error: 'User not found' });
+
+    if (index !== -1) {
+      const { name, email, phone, country, role, avatar, password } = req.body;
+      if (name) users[index].name = name;
+      if (email) users[index].email = email.toLowerCase();
+      if (phone) users[index].phone = phone;
+      if (country) users[index].country = country;
+      if (role) users[index].role = role;
+      if (avatar) users[index].avatar = avatar;
+      if (password) users[index].password = password;
+      writeData('users.json', users);
+    }
+
+    res.json({ success: true, user: mongoUpdated || (index !== -1 ? users[index] : req.body) });
   } catch (err) {
     res.status(500).json({ error: 'Failed to update user' });
   }
 });
 
 // PUT update user role
-router.put('/:id/role', (req, res) => {
+router.put('/:id/role', async (req, res) => {
+  const targetRole = req.body.role;
+  let mongoUpdated = null;
+  if (mongoose.connection.readyState === 1) {
+    try {
+      mongoUpdated = await User.findOneAndUpdate(
+        { $or: [{ id: req.params.id }, { _id: mongoose.isValidObjectId(req.params.id) ? req.params.id : null }] },
+        { $set: { role: targetRole } },
+        { new: true }
+      ).lean();
+    } catch (e) {}
+  }
+
   let users = readData('users.json');
   const index = users.findIndex(u => u.id === req.params.id);
-  if (index === -1) return res.status(404).json({ error: 'User not found' });
+  if (index !== -1) {
+    users[index].role = targetRole || users[index].role;
+    writeData('users.json', users);
+    return res.json(mongoUpdated || users[index]);
+  }
+  if (mongoUpdated) return res.json(mongoUpdated);
+  res.json({ success: true, message: 'Role updated' });
+});
 
-  users[index].role = req.body.role || users[index].role;
+// DELETE user by ID
+router.delete('/:id', async (req, res) => {
+  if (mongoose.connection.readyState === 1) {
+    try {
+      await User.deleteOne({
+        $or: [{ id: req.params.id }, { _id: mongoose.isValidObjectId(req.params.id) ? req.params.id : null }]
+      });
+    } catch (e) {}
+  }
+
+  let users = readData('users.json');
+  users = users.filter(u => u.id !== req.params.id);
   writeData('users.json', users);
-  res.json(users[index]);
+  res.json({ success: true, message: 'User deleted successfully' });
 });
 
 // GET user by ID
 router.get('/:id', async (req, res) => {
   try {
-    let users = readData('users.json');
-    let foundUser = users.find(u => u.id === req.params.id);
-    if (!foundUser) {
-      if (mongoose.connection.readyState === 1) {
-        try {
-          foundUser = await User.findOne({ id: req.params.id }).lean();
-        } catch (e) {}
-      }
+    let foundUser = null;
+    if (mongoose.connection.readyState === 1) {
+      try {
+        foundUser = await User.findOne({
+          $or: [{ id: req.params.id }, { _id: mongoose.isValidObjectId(req.params.id) ? req.params.id : null }]
+        }).lean();
+      } catch (e) {}
     }
+
+    if (!foundUser) {
+      let users = readData('users.json');
+      foundUser = users.find(u => u.id === req.params.id);
+    }
+
     if (!foundUser) return res.status(404).json({ error: 'User not found' });
     
     // Return user details without password hash

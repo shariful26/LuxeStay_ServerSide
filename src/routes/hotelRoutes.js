@@ -153,32 +153,40 @@ router.post('/', async (req, res) => {
 
 // PUT update hotel
 router.put('/:id', async (req, res) => {
+  let updatedHotel = null;
   if (mongoose.connection.readyState === 1) {
     try {
-      await Hotel.updateOne({ id: req.params.id }, { $set: req.body });
+      updatedHotel = await Hotel.findOneAndUpdate(
+        { $or: [{ id: req.params.id }, { _id: mongoose.isValidObjectId(req.params.id) ? req.params.id : null }, { slug: req.params.id }] },
+        { $set: req.body },
+        { new: true }
+      ).lean();
     } catch (e) {}
   }
 
   let hotels = readData('hotels.json');
-  const index = hotels.findIndex(h => h.id === req.params.id);
+  const index = hotels.findIndex(h => h.id === req.params.id || h.slug === req.params.id);
   if (index !== -1) {
     hotels[index] = { ...hotels[index], ...req.body };
     writeData('hotels.json', hotels);
-    return res.json(hotels[index]);
+    return res.json(updatedHotel || hotels[index]);
   }
-  res.json({ message: 'Hotel updated' });
+  if (updatedHotel) return res.json(updatedHotel);
+  res.json({ message: 'Hotel updated', ...req.body });
 });
 
 // DELETE hotel
 router.delete('/:id', async (req, res) => {
   if (mongoose.connection.readyState === 1) {
     try {
-      await Hotel.deleteOne({ id: req.params.id });
+      await Hotel.deleteOne({
+        $or: [{ id: req.params.id }, { _id: mongoose.isValidObjectId(req.params.id) ? req.params.id : null }, { slug: req.params.id }]
+      });
     } catch (e) {}
   }
 
   let hotels = readData('hotels.json');
-  hotels = hotels.filter(h => h.id !== req.params.id);
+  hotels = hotels.filter(h => h.id !== req.params.id && h.slug !== req.params.id);
   writeData('hotels.json', hotels);
   res.json({ message: 'Hotel deleted successfully' });
 });
