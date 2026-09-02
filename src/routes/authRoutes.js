@@ -212,11 +212,21 @@ router.post('/login', async (req, res) => {
     const cleanEmail = String(email).trim().toLowerCase();
     const targetRole = role || 'customer';
 
-    // 1. Fast In-Memory / File Database Check (instant response)
-    const existingUsers = readData('users.json') || [];
-    let userObj = existingUsers.find(u => u && u.email && u.email.toLowerCase() === cleanEmail);
+    // 1. Check Live MongoDB Atlas first (gets live updated profile, avatar, etc.)
+    let userObj = null;
+    if (mongoose.connection.readyState === 1) {
+      try {
+        userObj = await User.findOne({ email: cleanEmail }).lean();
+      } catch (findErr) {}
+    }
 
-    // 2. Pre-seeded high-speed demo accounts
+    // 2. If not found in Atlas yet or connecting, check local JSON
+    if (!userObj) {
+      const existingUsers = readData('users.json') || [];
+      userObj = existingUsers.find(u => u && u.email && u.email.toLowerCase() === cleanEmail);
+    }
+
+    // 3. Pre-seeded high-speed demo accounts fallback
     if (!userObj && DEMO_USERS[cleanEmail]) {
       const demo = DEMO_USERS[cleanEmail];
       const defaultHash = await bcrypt.hash('123456', 6);
@@ -231,27 +241,21 @@ router.post('/login', async (req, res) => {
         country: demo.country || 'United States',
         memberSince: '2026'
       };
+      const existingUsers = readData('users.json') || [];
       existingUsers.unshift(userObj);
       writeData('users.json', existingUsers);
     }
 
-    // 3. Fallback: Query Live MongoDB Atlas database if not yet cached locally
+    // 4. Final attempt to query Atlas with timeout if needed
     if (!userObj) {
       await connectDatabase();
       if (mongoose.connection.readyState === 1) {
         try {
-          const mongoUser = await Promise.race([
+          userObj = await Promise.race([
             User.findOne({ email: cleanEmail }).lean(),
-            new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000))
+            new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 2500))
           ]);
-          if (mongoUser) {
-            userObj = mongoUser;
-            existingUsers.unshift(mongoUser);
-            writeData('users.json', existingUsers);
-          }
-        } catch (e) {
-          // Continue
-        }
+        } catch (e) {}
       }
     }
 

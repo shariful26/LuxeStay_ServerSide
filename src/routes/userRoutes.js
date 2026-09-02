@@ -65,72 +65,76 @@ router.put('/profile', async (req, res) => {
   await connectDatabase();
   const { id, name, email, phone, country, avatar, address, city, state, zip, password } = req.body;
   try {
+    const cleanEmail = email ? String(email).trim().toLowerCase() : null;
+
+    // Build update fields dictionary
+    const updateFields = {};
+    if (name) updateFields.name = name.trim();
+    if (cleanEmail) updateFields.email = cleanEmail;
+    if (phone !== undefined) updateFields.phone = phone;
+    if (country !== undefined) updateFields.country = country;
+    if (avatar) updateFields.avatar = avatar;
+    if (address !== undefined) updateFields.address = address;
+    if (city !== undefined) updateFields.city = city;
+    if (state !== undefined) updateFields.state = state;
+    if (zip !== undefined) updateFields.zip = zip;
+    if (password) updateFields.password = password;
+
     let dbUser = null;
-    if (mongoose.connection.readyState === 1) {
+    if (mongoose.connection.readyState === 1 && (cleanEmail || id)) {
       try {
+        const filter = cleanEmail ? { email: cleanEmail } : { id: id };
         dbUser = await User.findOneAndUpdate(
-          { $or: [{ id }, { _id: mongoose.isValidObjectId(id) ? id : null }, { email: email ? email.toLowerCase() : null }] },
-          { name, email: email ? email.toLowerCase() : undefined, phone, country, avatar, address, city, state, zip },
-          { new: true }
+          filter,
+          { 
+            $set: updateFields, 
+            $setOnInsert: { 
+              id: id || `u_${Date.now()}`, 
+              role: req.body.role || 'customer', 
+              memberSince: '2026' 
+            } 
+          },
+          { upsert: true, new: true }
         ).lean();
-      } catch (e) {}
+      } catch (e) {
+        // Mongo update fallback
+      }
     }
 
-    const users = readData('users.json');
-    const index = users.findIndex(u => (id && u.id === id) || (email && u.email && u.email.toLowerCase() === (email || '').toLowerCase()));
+    const users = readData('users.json') || [];
+    const index = users.findIndex(u => (id && u.id === id) || (cleanEmail && u.email && u.email.toLowerCase() === cleanEmail));
     
-    if (index === -1) {
+    if (index !== -1) {
+      users[index] = { ...users[index], ...updateFields };
+    } else {
       const newUser = {
-        id: id || `u_${Date.now()}`,
-        name: name || 'Guest User',
-        email: email ? email.toLowerCase() : 'guest@luxestay.com',
-        password: password || '123456',
-        role: 'customer',
-        phone: phone || '+1 (555) 234-5678',
-        avatar: avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
-        country: country || 'United States',
-        address: address || '',
-        city: city || '',
-        state: state || '',
-        zip: zip || '',
-        memberSince: '2026'
+        id: id || dbUser?.id || `u_${Date.now()}`,
+        name: name || 'User',
+        email: cleanEmail || 'user@luxestay.com',
+        role: req.body.role || 'customer',
+        ...updateFields
       };
       users.unshift(newUser);
-      writeData('users.json', users);
-      
-      if (mongoose.connection.readyState === 1) {
-        try {
-          const freshMongoUser = new User(newUser);
-          await freshMongoUser.save();
-        } catch (e) {}
-      }
-
-      return res.json({ success: true, message: 'Profile created and updated successfully', user: newUser });
     }
-
-    if (name) users[index].name = name;
-    if (email) users[index].email = email.toLowerCase();
-    if (phone) users[index].phone = phone;
-    if (country) users[index].country = country;
-    if (avatar) users[index].avatar = avatar;
-    if (address !== undefined) users[index].address = address;
-    if (city !== undefined) users[index].city = city;
-    if (state !== undefined) users[index].state = state;
-    if (zip !== undefined) users[index].zip = zip;
-    if (password) users[index].password = password;
-
     writeData('users.json', users);
 
-    const updatedUser = dbUser || users[index];
-    let returnUser = updatedUser;
-    if (returnUser) {
-      returnUser.id = returnUser.id || returnUser._id?.toString() || id;
-    }
-
+    const finalUser = dbUser || (index !== -1 ? users[index] : users[0]);
     res.json({
       success: true,
       message: 'Profile updated successfully',
-      user: returnUser
+      user: {
+        id: finalUser.id || finalUser._id?.toString() || id,
+        name: finalUser.name,
+        email: finalUser.email,
+        role: finalUser.role || 'customer',
+        avatar: finalUser.avatar,
+        phone: finalUser.phone,
+        country: finalUser.country,
+        address: finalUser.address,
+        city: finalUser.city,
+        state: finalUser.state,
+        zip: finalUser.zip
+      }
     });
   } catch (err) {
     res.status(500).json({ error: 'Server error updating profile' });
