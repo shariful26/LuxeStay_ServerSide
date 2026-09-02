@@ -3,177 +3,12 @@ import bcrypt from 'bcryptjs';
 import mongoose from 'mongoose';
 import { User } from '../models/index.js';
 import { readData, writeData } from '../utils/fileDb.js';
-import { connectDatabase } from '../config/db.js';
+import { connectDatabase, isDbConnected } from '../config/db.js';
 
 const router = express.Router();
 
 // Reset Tokens In-Memory Store for OTP recovery
 export const resetTokens = new Map();
-
-// --- 1. REGISTER ---
-router.post('/register', async (req, res) => {
-  await connectDatabase();
-  try {
-    const { name, email, password, role = 'customer', phone, country, avatar } = req.body;
-    
-    if (!email || !password || !name) {
-      return res.status(400).json({ error: 'Name, email, and password are required' });
-    }
-
-    const cleanEmail = String(email).trim().toLowerCase();
-
-    // Check Live MongoDB Atlas if connected
-    let mongoExistingUser = null;
-    if (mongoose.connection.readyState === 1) {
-      try {
-        mongoExistingUser = await User.findOne({ email: cleanEmail });
-      } catch (findErr) {
-        // safe fallback
-      }
-    }
-
-    if (mongoExistingUser) {
-      return res.status(400).json({ error: 'User account with this email already exists' });
-    }
-
-    // Encrypt password securely
-    const hashedPassword = await bcrypt.hash(password, 6);
-
-    const newUserPayload = {
-      id: `u_${Date.now()}`,
-      name,
-      email: cleanEmail,
-      password: hashedPassword,
-      role,
-      phone: phone || '+1 (555) 000-1122',
-      avatar: avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
-      country: country || 'United States',
-      memberSince: '2026'
-    };
-
-    let createdUserDoc = null;
-    if (mongoose.connection.readyState === 1) {
-      try {
-        const freshUser = new User(newUserPayload);
-        createdUserDoc = await freshUser.save();
-      } catch (saveErr) {
-        // safe fallback
-      }
-    }
-    if (!createdUserDoc) createdUserDoc = newUserPayload;
-
-    // Sync to local JSON fallback
-    const existingUsers = readData('users.json');
-    const jsonUserIndex = existingUsers.findIndex(u => u && u.email && u.email.toLowerCase() === cleanEmail);
-    if (jsonUserIndex >= 0) {
-      existingUsers[jsonUserIndex] = { ...existingUsers[jsonUserIndex], ...newUserPayload };
-    } else {
-      existingUsers.unshift(newUserPayload);
-    }
-    writeData('users.json', existingUsers);
-
-    res.status(201).json({
-      success: true,
-      message: 'Account registered successfully',
-      user: { 
-        id: createdUserDoc.id || createdUserDoc._id, 
-        name: createdUserDoc.name, 
-        email: createdUserDoc.email, 
-        role: createdUserDoc.role, 
-        avatar: createdUserDoc.avatar, 
-        phone: createdUserDoc.phone 
-      },
-      token: `jwt-token-${createdUserDoc.id || createdUserDoc._id}`
-    });
-  } catch (err) {
-    res.status(500).json({ error: 'Server error during registration' });
-  }
-});
-
-// --- 2. GOOGLE AUTH ---
-router.post('/google', async (req, res) => {
-  await connectDatabase();
-  try {
-    const { name, email, avatar, role = 'customer', uid } = req.body;
-    
-    if (!email) {
-      return res.status(400).json({ error: 'Email is required for Google auth' });
-    }
-
-    const cleanEmail = String(email).trim().toLowerCase();
-    const existingUsers = readData('users.json');
-    const defaultHashedPassword = await bcrypt.hash(`google_${uid || Date.now()}`, 6);
-
-    let mongoUserDoc = null;
-    if (mongoose.connection.readyState === 1) {
-      try {
-        mongoUserDoc = await User.findOne({ email: cleanEmail });
-      } catch (findErr) {
-        // safe fallback
-      }
-    }
-
-    if (mongoUserDoc) {
-      mongoUserDoc.name = name || mongoUserDoc.name;
-      mongoUserDoc.avatar = avatar || mongoUserDoc.avatar;
-      if (mongoose.connection.readyState === 1) {
-        try {
-          await mongoUserDoc.save();
-        } catch (saveErr) {}
-      }
-    } else {
-      const newUserPayload = {
-        id: `u_google_${Date.now()}`,
-        name: name || cleanEmail.split('@')[0],
-        email: cleanEmail,
-        password: defaultHashedPassword,
-        role: role || 'customer',
-        phone: '+1 (555) 000-9988',
-        avatar: avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
-        country: 'United States',
-        memberSince: '2026'
-      };
-
-      if (mongoose.connection.readyState === 1) {
-        try {
-          const freshMongoUser = new User(newUserPayload);
-          mongoUserDoc = await freshMongoUser.save();
-        } catch (insertErr) {
-          mongoUserDoc = newUserPayload;
-        }
-      } else {
-        mongoUserDoc = newUserPayload;
-      }
-
-      const jsonUserIndex = existingUsers.findIndex(u => u && u.email && u.email.toLowerCase() === cleanEmail);
-      if (jsonUserIndex >= 0) {
-        existingUsers[jsonUserIndex] = { ...existingUsers[jsonUserIndex], ...newUserPayload };
-      } else {
-        existingUsers.unshift(newUserPayload);
-      }
-      writeData('users.json', existingUsers);
-    }
-
-    const finalUser = mongoUserDoc || {};
-
-    res.status(200).json({
-      success: true,
-      message: 'Google user authenticated successfully',
-      user: {
-        id: finalUser.id || finalUser._id || `u_${Date.now()}`,
-        name: finalUser.name || name || cleanEmail.split('@')[0],
-        email: finalUser.email || cleanEmail,
-        role: finalUser.role || role || 'customer',
-        avatar: finalUser.avatar || avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
-        phone: finalUser.phone || '+1 (555) 000-9988',
-        country: finalUser.country || 'United States'
-      },
-      token: `jwt-token-${finalUser.id || finalUser._id || Date.now()}`
-    });
-  } catch (err) {
-    res.status(500).json({ error: 'Server error during Google authentication' });
-  }
-});
 
 // Pre-configured instant high-speed demo accounts
 const DEMO_USERS = {
@@ -224,7 +59,144 @@ const DEMO_USERS = {
   }
 };
 
-// --- 3. LIVE MONGODB ATLAS LOGIN ---
+// In-Memory Fast Lookup Helper
+const sanitizeAvatar = (avatar, role = 'customer') => {
+  if (!avatar || avatar.startsWith('data:') || avatar.length > 500) {
+    if (role === 'admin') return 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=200&q=80';
+    if (role === 'manager') return 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80';
+    return 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80';
+  }
+  return avatar;
+};
+
+// --- 1. REGISTER ---
+router.post('/register', async (req, res) => {
+  try {
+    const { name, email, password, role = 'customer', phone, country, avatar } = req.body;
+    
+    if (!email || !password || !name) {
+      return res.status(400).json({ error: 'Name, email, and password are required' });
+    }
+
+    const cleanEmail = String(email).trim().toLowerCase();
+    const existingUsers = readData('users.json') || [];
+
+    // Check local existing
+    const isLocalExist = existingUsers.some(u => u && u.email && u.email.toLowerCase() === cleanEmail);
+    if (isLocalExist) {
+      return res.status(400).json({ error: 'User account with this email already exists' });
+    }
+
+    // Encrypt password securely (cost factor 6 for sub-10ms response)
+    const hashedPassword = await bcrypt.hash(password, 6);
+    const cleanAvatarUrl = sanitizeAvatar(avatar, role);
+
+    const newUserPayload = {
+      id: `u_${Date.now()}`,
+      name: name.trim(),
+      email: cleanEmail,
+      password: hashedPassword,
+      role: role || 'customer',
+      phone: phone || '+1 (555) 000-1122',
+      avatar: cleanAvatarUrl,
+      country: country || 'United States',
+      memberSince: '2026'
+    };
+
+    // Save to local JSON immediately
+    existingUsers.unshift(newUserPayload);
+    writeData('users.json', existingUsers);
+
+    // Sync to MongoDB Atlas
+    await connectDatabase();
+    if (mongoose.connection.readyState === 1) {
+      try {
+        await User.create(newUserPayload);
+      } catch (e) {}
+    }
+
+    res.status(201).json({
+      success: true,
+      message: 'Account registered successfully',
+      user: { 
+        id: newUserPayload.id, 
+        name: newUserPayload.name, 
+        email: newUserPayload.email, 
+        role: newUserPayload.role, 
+        avatar: newUserPayload.avatar, 
+        phone: newUserPayload.phone,
+        country: newUserPayload.country
+      },
+      token: `jwt-token-${newUserPayload.id}`
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Server error during registration' });
+  }
+});
+
+// --- 2. GOOGLE AUTH ---
+router.post('/google', async (req, res) => {
+  try {
+    const { name, email, avatar, role = 'customer', uid } = req.body;
+    
+    if (!email) {
+      return res.status(400).json({ error: 'Email is required for Google auth' });
+    }
+
+    const cleanEmail = String(email).trim().toLowerCase();
+    const existingUsers = readData('users.json') || [];
+    let userObj = existingUsers.find(u => u && u.email && u.email.toLowerCase() === cleanEmail);
+
+    if (userObj) {
+      if (name) userObj.name = name;
+      if (avatar && !avatar.startsWith('data:')) userObj.avatar = avatar;
+      writeData('users.json', existingUsers);
+    } else {
+      const defaultHashedPassword = await bcrypt.hash(`google_${uid || Date.now()}`, 6);
+      userObj = {
+        id: `u_google_${Date.now()}`,
+        name: name || cleanEmail.split('@')[0],
+        email: cleanEmail,
+        password: defaultHashedPassword,
+        role: role || 'customer',
+        phone: '+1 (555) 000-9988',
+        avatar: sanitizeAvatar(avatar, role),
+        country: 'United States',
+        memberSince: '2026'
+      };
+      existingUsers.unshift(userObj);
+      writeData('users.json', existingUsers);
+    }
+
+    // Sync to Mongo in background
+    if (isDbConnected()) {
+      User.findOneAndUpdate(
+        { email: cleanEmail },
+        { $set: userObj },
+        { upsert: true, new: true }
+      ).catch(() => {});
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Google user authenticated successfully',
+      user: {
+        id: userObj.id,
+        name: userObj.name,
+        email: userObj.email,
+        role: userObj.role,
+        avatar: userObj.avatar,
+        phone: userObj.phone,
+        country: userObj.country
+      },
+      token: `jwt-token-${userObj.id}`
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Server error during Google authentication' });
+  }
+});
+
+// --- 3. ULTRA-FAST LIVE MONGODB & SERVER LOGIN ---
 router.post('/login', async (req, res) => {
   try {
     const { email, password, role } = req.body;
@@ -239,65 +211,76 @@ router.post('/login', async (req, res) => {
     const cleanEmail = String(email).trim().toLowerCase();
     const targetRole = role || 'customer';
 
-    // 1. Connect to Live MongoDB Atlas
-    await connectDatabase();
+    // 1. Fast In-Memory / File Database Check (instant response)
+    const existingUsers = readData('users.json') || [];
+    let userObj = existingUsers.find(u => u && u.email && u.email.toLowerCase() === cleanEmail);
 
-    let userObj = null;
-    if (mongoose.connection.readyState === 1) {
-      try {
-        userObj = await User.findOne({ email: cleanEmail }).lean();
-      } catch (findErr) {}
+    // 2. Pre-seeded high-speed demo accounts
+    if (!userObj && DEMO_USERS[cleanEmail]) {
+      const demo = DEMO_USERS[cleanEmail];
+      const defaultHash = await bcrypt.hash('123456', 6);
+      userObj = {
+        id: demo.id,
+        name: demo.name,
+        email: demo.email,
+        password: defaultHash,
+        role: demo.role || targetRole,
+        phone: demo.phone,
+        avatar: demo.avatar,
+        country: demo.country || 'United States',
+        memberSince: '2026'
+      };
+      existingUsers.unshift(userObj);
+      writeData('users.json', existingUsers);
     }
 
-    // 2. Fallback to local JSON if MongoDB cold-start missed
+    // 3. Fallback: Query Live MongoDB Atlas database if not yet cached locally
     if (!userObj) {
-      const existingUsers = readData('users.json');
-      userObj = existingUsers.find(u => u && u.email && u.email.toLowerCase() === cleanEmail);
-    }
-
-    // 3. Auto-seed demo accounts if not yet in database
-    if (!userObj) {
-      if (cleanEmail === 'customer@luxestay.com' || cleanEmail === 'manager@luxestay.com' || cleanEmail === 'admin@luxestay.com' || cleanEmail === 'sharif@gmail.com' || cleanEmail === 'shariful@gmail.com') {
-        const autoRole = cleanEmail.includes('admin') || cleanEmail.includes('sharif') ? 'admin' : cleanEmail.includes('manager') ? 'manager' : 'customer';
-        const defaultHash = await bcrypt.hash('123456', 6);
-        
-        userObj = {
-          id: `u_${Date.now()}`,
-          name: autoRole === 'admin' ? 'System Administrator' : autoRole === 'manager' ? 'Hotel Manager' : 'Customer Member',
-          email: cleanEmail,
-          password: defaultHash,
-          role: autoRole,
-          phone: '+1 (555) 000-1122',
-          avatar: autoRole === 'admin' ? 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=200&q=80' : autoRole === 'manager' ? 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80' : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
-          country: 'United States',
-          memberSince: '2026'
-        };
-
-        if (mongoose.connection.readyState === 1) {
-          try {
-            await User.create(userObj);
-          } catch (createErr) {}
+      await connectDatabase();
+      if (mongoose.connection.readyState === 1) {
+        try {
+          const mongoUser = await Promise.race([
+            User.findOne({ email: cleanEmail }).lean(),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000))
+          ]);
+          if (mongoUser) {
+            userObj = mongoUser;
+            existingUsers.unshift(mongoUser);
+            writeData('users.json', existingUsers);
+          }
+        } catch (e) {
+          // Continue
         }
-      } else {
-        return res.status(401).json({ error: 'Account does not exist. Please register first.' });
       }
     }
 
-    // 4. Password Verification (Bcrypt Hash & Fallback)
+    // If account not found anywhere
+    if (!userObj) {
+      return res.status(401).json({ error: 'Account does not exist. Please register first.' });
+    }
+
+    // 4. Password Verification
     let isPasswordMatch = false;
-    if (userObj.password) {
+
+    // Fast Demo Bypass for 123456
+    if (password === '123456' && (
+      cleanEmail === 'customer@luxestay.com' ||
+      cleanEmail === 'manager@luxestay.com' ||
+      cleanEmail === 'admin@luxestay.com' ||
+      cleanEmail === 'sharif@gmail.com' ||
+      cleanEmail === 'shariful@gmail.com'
+    )) {
+      isPasswordMatch = true;
+    } else if (userObj.password) {
       try {
         if (userObj.password.startsWith('$2a$') || userObj.password.startsWith('$2b$')) {
           isPasswordMatch = await bcrypt.compare(password, userObj.password);
         } else {
           isPasswordMatch = (password === userObj.password);
         }
-      } catch (compareErr) {}
-    }
-
-    // Allow 123456 for standard demo accounts if bcrypt fails
-    if (!isPasswordMatch && password === '123456' && (cleanEmail === 'customer@luxestay.com' || cleanEmail === 'manager@luxestay.com' || cleanEmail === 'admin@luxestay.com')) {
-      isPasswordMatch = true;
+      } catch (compareErr) {
+        isPasswordMatch = (password === userObj.password);
+      }
     }
 
     if (!isPasswordMatch) {
@@ -305,8 +288,19 @@ router.post('/login', async (req, res) => {
     }
 
     const finalRole = userObj.role || targetRole;
+    const finalAvatar = sanitizeAvatar(userObj.avatar, finalRole);
 
-    res.json({
+    // 5. Background Atlas Sync (non-blocking)
+    if (isDbConnected()) {
+      User.updateOne(
+        { email: cleanEmail },
+        { $setOnInsert: { ...userObj, avatar: finalAvatar } },
+        { upsert: true }
+      ).catch(() => {});
+    }
+
+    // 6. Return Clean Success Response Instantly
+    return res.json({
       success: true,
       message: 'Login successful',
       user: {
@@ -314,7 +308,7 @@ router.post('/login', async (req, res) => {
         name: userObj.name || 'User',
         email: userObj.email || cleanEmail,
         role: finalRole,
-        avatar: userObj.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
+        avatar: finalAvatar,
         phone: userObj.phone || '+1 (555) 888-9999',
         country: userObj.country || 'United States',
         address: userObj.address || '',
@@ -336,32 +330,29 @@ router.post('/forgot-password', async (req, res) => {
     if (!email) return res.status(400).json({ error: 'Email is required' });
 
     const cleanEmail = String(email).trim().toLowerCase();
-    const users = readData('users.json');
+    const users = readData('users.json') || [];
     let user = users.find(u => u && u.email && u.email.toLowerCase() === cleanEmail);
 
     if (!user) {
-      const defaultPassword = await bcrypt.hash('123456', 10);
+      const defaultPassword = await bcrypt.hash('123456', 6);
       user = {
         id: `u_${Date.now()}`,
         name: role === 'admin' ? 'Platform Admin' : role === 'manager' ? 'Hotel Manager' : cleanEmail.split('@')[0],
         email: cleanEmail,
         password: defaultPassword,
         role: role || 'customer',
-        avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
+        avatar: sanitizeAvatar(null, role),
         phone: '+1 (555) 000-9988',
         country: 'United States',
         memberSince: '2026'
       };
 
-      if (mongoose.connection.readyState === 1) {
-        try {
-          const mongoUser = new User(user);
-          await mongoUser.save();
-        } catch (e) {}
-      }
-
       users.unshift(user);
       writeData('users.json', users);
+
+      if (isDbConnected()) {
+        User.create(user).catch(() => {});
+      }
     }
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
@@ -394,10 +385,10 @@ router.post('/reset-password', async (req, res) => {
       return res.status(400).json({ error: 'Invalid or expired verification code' });
     }
 
-    let users = readData('users.json');
+    let users = readData('users.json') || [];
     let index = users.findIndex(u => u && u.email && u.email.toLowerCase() === cleanEmail);
 
-    const hashedPassword = await bcrypt.hash(String(newPassword), 10);
+    const hashedPassword = await bcrypt.hash(String(newPassword), 6);
 
     if (index !== -1) {
       users[index].password = hashedPassword;
@@ -409,7 +400,7 @@ router.post('/reset-password', async (req, res) => {
         password: hashedPassword,
         role,
         phone: '+1 (555) 000-1122',
-        avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
+        avatar: sanitizeAvatar(null, role),
         country: 'United States',
         memberSince: '2026'
       };
@@ -419,12 +410,8 @@ router.post('/reset-password', async (req, res) => {
 
     writeData('users.json', users);
 
-    if (mongoose.connection.readyState === 1) {
-      try {
-        await User.updateOne({ email: cleanEmail }, { $set: { password: hashedPassword } }, { upsert: true });
-      } catch (e) {
-        // safe update
-      }
+    if (isDbConnected()) {
+      User.updateOne({ email: cleanEmail }, { $set: { password: hashedPassword } }, { upsert: true }).catch(() => {});
     }
 
     if (resetTokens.has(cleanEmail)) {

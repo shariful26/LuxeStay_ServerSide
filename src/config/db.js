@@ -10,6 +10,10 @@ if (!cached) {
 // Default MongoDB URI fallback for live serverless environment
 const DEFAULT_MONGODB_URI = 'mongodb+srv://HotelDbUser:9KLSW5obEl9pdO8h@cluster0.zakm4rq.mongodb.net/hotel_db?retryWrites=true&w=majority&appName=Cluster0';
 
+export const isDbConnected = () => {
+  return mongoose.connection && mongoose.connection.readyState === 1;
+};
+
 export const connectDatabase = async () => {
   const MONGODB_URI = process.env.MONGODB_URI || DEFAULT_MONGODB_URI;
 
@@ -19,9 +23,9 @@ export const connectDatabase = async () => {
 
   if (!cached.promise) {
     const opts = {
-      bufferCommands: true,
-      serverSelectionTimeoutMS: 10000,
-      connectTimeoutMS: 10000,
+      bufferCommands: false,
+      serverSelectionTimeoutMS: 2500,
+      connectTimeoutMS: 2500,
       maxPoolSize: 10
     };
 
@@ -48,3 +52,4 @@ export const connectDatabase = async () => {
 
   return cached.conn;
 };
+
