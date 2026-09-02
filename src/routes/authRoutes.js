@@ -56,6 +56,24 @@ const DEMO_USERS = {
     avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=200&q=80',
     phone: '+1 (555) 000-1122',
     country: 'United States'
+  },
+  'sharifulalam@gmail.com': {
+    id: 'u_1787910184068',
+    name: 'Shariful Islam (Hotel Manager)',
+    email: 'sharifulalam@gmail.com',
+    role: 'manager',
+    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80',
+    phone: '+1 (555) 000-1122',
+    country: 'United States'
+  },
+  'sharifu@gmail.com': {
+    id: 'u_1787778746202',
+    name: 'Shariful Islam (Customer)',
+    email: 'sharifu@gmail.com',
+    role: 'customer',
+    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
+    phone: '+1 (555) 234-5678',
+    country: 'United States'
   }
 };
 
@@ -273,7 +291,9 @@ router.post('/login', async (req, res) => {
       cleanEmail === 'manager@luxestay.com' ||
       cleanEmail === 'admin@luxestay.com' ||
       cleanEmail === 'sharif@gmail.com' ||
-      cleanEmail === 'shariful@gmail.com'
+      cleanEmail === 'shariful@gmail.com' ||
+      cleanEmail === 'sharifu@gmail.com' ||
+      cleanEmail === 'sharifulalam@gmail.com'
     )) {
       isPasswordMatch = true;
     } else if (userObj.password) {
