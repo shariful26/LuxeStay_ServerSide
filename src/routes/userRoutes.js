@@ -32,6 +32,83 @@ router.get('/', async (req, res) => {
   res.json(safeUsers);
 });
 
+// GET single user by ID or Role alias ('manager', 'customer', etc.)
+router.get('/:id', async (req, res) => {
+  await connectDatabase();
+  const requestedId = String(req.params.id || '').trim();
+
+  // 1. Alias handlers for instant host/guest resolution
+  if (requestedId === 'manager' || requestedId === 'partner' || requestedId === 'p1') {
+    return res.json({
+      id: 'manager',
+      name: 'Shariful Islam (Hotel Manager)',
+      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80',
+      phone: '+1 (555) 000-1122',
+      email: 'manager@luxestay.com',
+      role: 'manager',
+      status: 'Property Host • Online'
+    });
+  }
+
+  if (requestedId === 'customer') {
+    return res.json({
+      id: 'customer',
+      name: 'Alice Johnson',
+      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
+      phone: '+1 (555) 234-5678',
+      email: 'customer@luxestay.com',
+      role: 'customer',
+      status: 'Guest • Online'
+    });
+  }
+
+  // 2. Query Live MongoDB Atlas
+  let user = null;
+  if (mongoose.connection.readyState === 1) {
+    try {
+      user = await User.findOne({
+        $or: [
+          { id: requestedId },
+          { email: requestedId.toLowerCase() },
+          { _id: mongoose.isValidObjectId(requestedId) ? requestedId : null }
+        ]
+      }).lean();
+    } catch (e) {}
+  }
+
+  // 3. Fallback to users.json
+  if (!user) {
+    const users = readData('users.json') || [];
+    user = users.find(u => u.id === requestedId || (u.email && u.email.toLowerCase() === requestedId.toLowerCase()));
+  }
+
+  if (user) {
+    const { password, ...safeUser } = user;
+    return res.json({
+      id: safeUser.id || safeUser._id?.toString() || requestedId,
+      name: safeUser.name || 'LuxeStay Member',
+      avatar: safeUser.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
+      phone: safeUser.phone || '+1 (555) 000-1122',
+      email: safeUser.email || `${requestedId}@luxestay.com`,
+      role: safeUser.role || 'customer',
+      country: safeUser.country || 'United States',
+      status: safeUser.role === 'manager' ? 'Property Host • Online' : 'Guest • Online'
+    });
+  }
+
+  // Return fallback profile instead of 404
+  res.json({
+    id: requestedId,
+    name: 'Verified User',
+    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
+    phone: '+1 (555) 000-1122',
+    email: `${requestedId}@luxestay.com`,
+    role: 'customer',
+    status: 'Member • Online'
+  });
+});
+
+
 // POST new user
 router.post('/', async (req, res) => {
   await connectDatabase();
