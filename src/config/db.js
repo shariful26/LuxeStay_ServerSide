@@ -7,12 +7,11 @@ if (!cached) {
   cached = global.mongoose = { conn: null, promise: null, seeded: false };
 }
 
-export const connectDatabase = async () => {
-  const MONGODB_URI = process.env.MONGODB_URI;
+// Default MongoDB URI fallback for live serverless environment
+const DEFAULT_MONGODB_URI = 'mongodb+srv://HotelDbUser:9KLSW5obEl9pdO8h@cluster0.zakm4rq.mongodb.net/hotel_db?retryWrites=true&w=majority&appName=Cluster0';
 
-  if (!MONGODB_URI) {
-    return null;
-  }
+export const connectDatabase = async () => {
+  const MONGODB_URI = process.env.MONGODB_URI || DEFAULT_MONGODB_URI;
 
   if (cached.conn && mongoose.connection.readyState === 1) {
     return cached.conn;
@@ -20,25 +19,32 @@ export const connectDatabase = async () => {
 
   if (!cached.promise) {
     const opts = {
-      bufferCommands: false,
-      serverSelectionTimeoutMS: 5000,
-      connectTimeoutMS: 5000,
+      bufferCommands: true,
+      serverSelectionTimeoutMS: 10000,
+      connectTimeoutMS: 10000,
       maxPoolSize: 10
     };
 
     cached.promise = mongoose.connect(MONGODB_URI, opts).then((m) => {
+      console.log('MongoDB Atlas Connected Successfully!');
       if (!cached.seeded) {
         cached.seeded = true;
-        // Run seeder asynchronously in background
+        // Run initial seed if collections are empty
         seedMongoDBDatabase().catch(() => {});
       }
       return m;
     }).catch(err => {
+      console.error('MongoDB Atlas Connection Error:', err.message);
       cached.promise = null;
       return null;
     });
   }
 
-  cached.conn = await cached.promise;
+  try {
+    cached.conn = await cached.promise;
+  } catch (e) {
+    cached.conn = null;
+  }
+
   return cached.conn;
 };

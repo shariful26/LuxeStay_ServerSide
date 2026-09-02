@@ -2,11 +2,13 @@ import express from 'express';
 import mongoose from 'mongoose';
 import { Hotel, Room } from '../models/index.js';
 import { readData, writeData } from '../utils/fileDb.js';
+import { connectDatabase } from '../config/db.js';
 
 const router = express.Router();
 
 // GET all hotels with search and advanced filters
 router.get('/', async (req, res) => {
+  await connectDatabase();
   let hotels = [];
   try {
     if (mongoose.connection.readyState === 1) {
@@ -65,6 +67,7 @@ router.get('/', async (req, res) => {
 
 // GET hotel by ID / slug with associated rooms
 router.get('/:id', async (req, res) => {
+  await connectDatabase();
   let hotel = null;
   let rooms = [];
 
@@ -114,6 +117,7 @@ router.get('/:id', async (req, res) => {
 
 // POST create hotel
 router.post('/', async (req, res) => {
+  await connectDatabase();
   const newHotel = {
     id: `h${Date.now()}`,
     name: req.body.name || 'New Luxury Hotel',
@@ -153,6 +157,7 @@ router.post('/', async (req, res) => {
 
 // PUT update hotel
 router.put('/:id', async (req, res) => {
+  await connectDatabase();
   let updatedHotel = null;
   if (mongoose.connection.readyState === 1) {
     try {
@@ -177,6 +182,7 @@ router.put('/:id', async (req, res) => {
 
 // DELETE hotel
 router.delete('/:id', async (req, res) => {
+  await connectDatabase();
   if (mongoose.connection.readyState === 1) {
     try {
       await Hotel.deleteOne({

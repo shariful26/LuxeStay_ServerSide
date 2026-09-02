@@ -2,11 +2,13 @@ import express from 'express';
 import mongoose from 'mongoose';
 import { Destination, Hotel } from '../models/index.js';
 import { readData, writeData } from '../utils/fileDb.js';
+import { connectDatabase } from '../config/db.js';
 
 const router = express.Router();
 
 // GET all destinations
 router.get('/', async (req, res) => {
+  await connectDatabase();
   let destinations = [];
   try {
     if (mongoose.connection.readyState === 1) {
@@ -23,6 +25,7 @@ router.get('/', async (req, res) => {
 
 // GET destination by slug / ID with associated hotels
 router.get('/:slug', async (req, res) => {
+  await connectDatabase();
   let dest = null;
   let hotels = [];
 

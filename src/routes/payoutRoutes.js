@@ -2,11 +2,13 @@ import express from 'express';
 import mongoose from 'mongoose';
 import { Payout } from '../models/index.js';
 import { readData, writeData } from '../utils/fileDb.js';
+import { connectDatabase } from '../config/db.js';
 
 const router = express.Router();
 
 // GET payouts
 router.get('/', async (req, res) => {
+  await connectDatabase();
   let payouts = [];
   try {
     if (mongoose.connection.readyState === 1) {

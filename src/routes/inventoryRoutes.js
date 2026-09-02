@@ -2,11 +2,13 @@ import express from 'express';
 import mongoose from 'mongoose';
 import { Inventory } from '../models/index.js';
 import { readData, writeData } from '../utils/fileDb.js';
+import { connectDatabase } from '../config/db.js';
 
 const router = express.Router();
 
 // GET inventory items
 router.get('/', async (req, res) => {
+  await connectDatabase();
   let inventory = [];
   try {
     if (mongoose.connection.readyState === 1) {

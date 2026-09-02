@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import mongoose from 'mongoose';
 import { User } from '../models/index.js';
 import { readData, writeData } from '../utils/fileDb.js';
+import { connectDatabase } from '../config/db.js';
 
 const router = express.Router();
 
@@ -11,6 +12,7 @@ export const resetTokens = new Map();
 
 // --- 1. REGISTER ---
 router.post('/register', async (req, res) => {
+  await connectDatabase();
   try {
     const { name, email, password, role = 'customer', phone, country, avatar } = req.body;
     
@@ -90,6 +92,7 @@ router.post('/register', async (req, res) => {
 
 // --- 2. GOOGLE AUTH ---
 router.post('/google', async (req, res) => {
+  await connectDatabase();
   try {
     const { name, email, avatar, role = 'customer', uid } = req.body;
     
@@ -174,6 +177,7 @@ router.post('/google', async (req, res) => {
 
 // --- 3. LOGIN ---
 router.post('/login', async (req, res) => {
+  await connectDatabase();
   try {
     const { email, password, role } = req.body;
 

@@ -2,11 +2,13 @@ import express from 'express';
 import mongoose from 'mongoose';
 import { Message } from '../models/index.js';
 import { readData, writeData } from '../utils/fileDb.js';
+import { connectDatabase } from '../config/db.js';
 
 const router = express.Router();
 
 // GET all messages
 router.get('/', async (req, res) => {
+  await connectDatabase();
   let messages = [];
   try {
     if (mongoose.connection.readyState === 1) {
@@ -25,6 +27,7 @@ router.get('/', async (req, res) => {
 
 // POST send new message
 router.post('/', async (req, res) => {
+  await connectDatabase();
   const newMessage = {
     id: `msg-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
     senderId: req.body.senderId,
@@ -59,6 +62,7 @@ router.post('/', async (req, res) => {
 
 // PUT mark messages from a user as read
 router.put('/read', async (req, res) => {
+  await connectDatabase();
   const { senderId, recipientId } = req.body;
   if (!senderId || !recipientId) {
     return res.status(400).json({ error: 'senderId and recipientId are required' });

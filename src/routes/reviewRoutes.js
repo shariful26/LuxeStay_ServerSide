@@ -2,11 +2,13 @@ import express from 'express';
 import mongoose from 'mongoose';
 import { Review } from '../models/index.js';
 import { readData, writeData } from '../utils/fileDb.js';
+import { connectDatabase } from '../config/db.js';
 
 const router = express.Router();
 
 // GET reviews
 router.get('/', async (req, res) => {
+  await connectDatabase();
   let reviews = [];
   try {
     if (mongoose.connection.readyState === 1) {

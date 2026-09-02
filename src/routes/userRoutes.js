@@ -3,11 +3,13 @@ import bcrypt from 'bcryptjs';
 import mongoose from 'mongoose';
 import { User } from '../models/index.js';
 import { readData, writeData } from '../utils/fileDb.js';
+import { connectDatabase } from '../config/db.js';
 
 const router = express.Router();
 
 // GET all users (Live MongoDB with JSON fallback)
 router.get('/', async (req, res) => {
+  await connectDatabase();
   let users = [];
   try {
     if (mongoose.connection.readyState === 1) {
@@ -32,6 +34,7 @@ router.get('/', async (req, res) => {
 
 // POST new user
 router.post('/', async (req, res) => {
+  await connectDatabase();
   const cleanEmail = req.body.email ? String(req.body.email).trim().toLowerCase() : '';
   const newUser = {
     id: `u_${Date.now()}`,
@@ -59,6 +62,7 @@ router.post('/', async (req, res) => {
 
 // PUT update user profile (Customer / Partner / Admin)
 router.put('/profile', async (req, res) => {
+  await connectDatabase();
   const { id, name, email, phone, country, avatar, address, city, state, zip, password } = req.body;
   try {
     let dbUser = null;
@@ -135,6 +139,7 @@ router.put('/profile', async (req, res) => {
 
 // PUT change password securely
 router.put('/change-password', async (req, res) => {
+  await connectDatabase();
   const { id, email, currentPassword, newPassword } = req.body;
   try {
     if ((!id && !email) || !newPassword) {
@@ -196,6 +201,7 @@ router.put('/change-password', async (req, res) => {
 
 // PUT update user by ID
 router.put('/:id', async (req, res) => {
+  await connectDatabase();
   try {
     let mongoUpdated = null;
     if (mongoose.connection.readyState === 1) {
@@ -232,6 +238,7 @@ router.put('/:id', async (req, res) => {
 
 // PUT update user role
 router.put('/:id/role', async (req, res) => {
+  await connectDatabase();
   const targetRole = req.body.role;
   let mongoUpdated = null;
   if (mongoose.connection.readyState === 1) {
@@ -257,6 +264,7 @@ router.put('/:id/role', async (req, res) => {
 
 // DELETE user by ID
 router.delete('/:id', async (req, res) => {
+  await connectDatabase();
   if (mongoose.connection.readyState === 1) {
     try {
       await User.deleteOne({
@@ -273,6 +281,7 @@ router.delete('/:id', async (req, res) => {
 
 // GET user by ID
 router.get('/:id', async (req, res) => {
+  await connectDatabase();
   try {
     let foundUser = null;
     if (mongoose.connection.readyState === 1) {

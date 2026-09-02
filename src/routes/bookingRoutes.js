@@ -2,6 +2,7 @@ import express from 'express';
 import mongoose from 'mongoose';
 import { Booking } from '../models/index.js';
 import { readData, writeData } from '../utils/fileDb.js';
+import { connectDatabase } from '../config/db.js';
 
 const router = express.Router();
 
@@ -16,6 +17,7 @@ const datesOverlap = (startA, endA, startB, endB) => {
 
 // GET bookings (Live from MongoDB Atlas with JSON fallback)
 router.get('/', async (req, res) => {
+  await connectDatabase();
   let bookings = [];
   try {
     if (mongoose.connection.readyState === 1) {

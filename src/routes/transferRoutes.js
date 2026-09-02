@@ -2,11 +2,13 @@ import express from 'express';
 import mongoose from 'mongoose';
 import { Transfer } from '../models/index.js';
 import { readData, writeData } from '../utils/fileDb.js';
+import { connectDatabase } from '../config/db.js';
 
 const router = express.Router();
 
 // GET transfers
 router.get('/', async (req, res) => {
+  await connectDatabase();
   let transfers = [];
   try {
     if (mongoose.connection.readyState === 1) {

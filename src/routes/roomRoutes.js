@@ -2,11 +2,13 @@ import express from 'express';
 import mongoose from 'mongoose';
 import { Room, Hotel } from '../models/index.js';
 import { readData, writeData } from '../utils/fileDb.js';
+import { connectDatabase } from '../config/db.js';
 
 const router = express.Router();
 
 // GET all rooms
 router.get('/', async (req, res) => {
+  await connectDatabase();
   let rooms = [];
   try {
     if (mongoose.connection.readyState === 1) {
@@ -30,6 +32,7 @@ router.get('/', async (req, res) => {
 
 // GET room by ID / slug
 router.get('/:id', async (req, res) => {
+  await connectDatabase();
   let room = null;
   let hotel = null;
 
@@ -56,6 +59,7 @@ router.get('/:id', async (req, res) => {
 
 // POST create room
 router.post('/', async (req, res) => {
+  await connectDatabase();
   const newRoom = {
     id: `r${Date.now()}`,
     hotelId: req.body.hotelId || 'h1',
@@ -97,6 +101,7 @@ router.post('/', async (req, res) => {
 
 // PUT update room
 router.put('/:id', async (req, res) => {
+  await connectDatabase();
   let updatedRoom = null;
   try {
     if (mongoose.connection.readyState === 1) {
@@ -122,6 +127,7 @@ router.put('/:id', async (req, res) => {
 
 // PUT update housekeeping status & priority
 router.put('/:id/housekeeping', async (req, res) => {
+  await connectDatabase();
   const { id } = req.params;
   const { housekeepingStatus, housekeepingPriority, housekeepingNotes } = req.body;
 
@@ -165,6 +171,7 @@ router.put('/:id/housekeeping', async (req, res) => {
 
 // DELETE room
 router.delete('/:id', async (req, res) => {
+  await connectDatabase();
   try {
     if (mongoose.connection.readyState === 1) {
       await Room.deleteOne({
