@@ -6,18 +6,22 @@ import { connectDatabase } from '../config/db.js';
 
 const router = express.Router();
 
-// GET payouts
+// GET payouts (Always fresh, no caching)
 router.get('/', async (req, res) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+
   await connectDatabase();
   let payouts = [];
   try {
     if (mongoose.connection.readyState === 1) {
-      payouts = await Payout.find({}).lean();
+      payouts = await Payout.find({}).sort({ createdAt: -1 }).lean();
     }
   } catch (e) {}
 
   if (!payouts || payouts.length === 0) {
-    payouts = readData('payouts.json');
+    payouts = readData('payouts.json') || [];
   }
 
   const { partnerId } = req.query;
@@ -29,9 +33,11 @@ router.get('/', async (req, res) => {
 
 // POST request payout
 router.post('/', async (req, res) => {
-  const payouts = readData('payouts.json');
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  await connectDatabase();
+
   const newPayout = {
-    id: `PO-${Math.floor(10000 + Math.random() * 90000)}`,
+    id: req.body.id || `PO-${Math.floor(10000 + Math.random() * 90000)}`,
     partnerId: req.body.partnerId || 'p1',
     partnerName: req.body.partnerName || 'Partner',
     amount: Number(req.body.amount) || 500,
@@ -39,17 +45,20 @@ router.post('/', async (req, res) => {
     accountName: req.body.accountName || 'Beneficiary Account',
     accountDetails: req.body.accountDetails || 'SWIFT / IBAN Details',
     bankName: req.body.bankName || 'International Commercial Bank',
-    status: 'Pending',
-    createdAt: new Date().toISOString()
+    status: req.body.status || 'Pending',
+    createdAt: req.body.createdAt || new Date().toISOString()
   };
 
   if (mongoose.connection.readyState === 1) {
     try {
       const mongoPayout = new Payout(newPayout);
       await mongoPayout.save();
-    } catch (e) {}
+    } catch (e) {
+      console.error('Error saving payout to MongoDB:', e);
+    }
   }
 
+  const payouts = readData('payouts.json') || [];
   payouts.unshift(newPayout);
   writeData('payouts.json', payouts);
   res.status(201).json(newPayout);
@@ -57,6 +66,9 @@ router.post('/', async (req, res) => {
 
 // PUT update payout status
 router.put('/:id/status', async (req, res) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  await connectDatabase();
+
   const { id } = req.params;
   const status = req.body.status || 'Completed';
   const processedAt = new Date().toISOString();
@@ -72,7 +84,7 @@ router.put('/:id/status', async (req, res) => {
     } catch (e) {}
   }
 
-  const payouts = readData('payouts.json');
+  const payouts = readData('payouts.json') || [];
   const index = payouts.findIndex(p => p.id === id);
   if (index !== -1) {
     payouts[index].status = status;

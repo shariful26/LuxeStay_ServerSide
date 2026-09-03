@@ -6,8 +6,12 @@ import { connectDatabase } from '../config/db.js';
 
 const router = express.Router();
 
-// GET transfers
+// GET transfers (Always fresh, no caching)
 router.get('/', async (req, res) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+
   await connectDatabase();
   let transfers = [];
   try {
@@ -17,7 +21,7 @@ router.get('/', async (req, res) => {
   } catch (e) {}
 
   if (!transfers || transfers.length === 0) {
-    transfers = readData('transfers.json');
+    transfers = readData('transfers.json') || [];
   }
 
   const { partnerId } = req.query;
@@ -29,8 +33,11 @@ router.get('/', async (req, res) => {
 
 // POST dispatch / request transfer
 router.post('/', async (req, res) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  await connectDatabase();
+
   const newTransfer = {
-    id: `TR-${Math.floor(10000 + Math.random() * 90000)}`,
+    id: req.body.id || `TR-${Math.floor(10000 + Math.random() * 90000)}`,
     partnerId: req.body.partnerId || 'p1',
     partnerName: req.body.partnerName || 'Partner',
     amount: Number(req.body.amount) || 200,
@@ -38,19 +45,21 @@ router.post('/', async (req, res) => {
     accountName: req.body.accountName || 'Personal Account Holder',
     accountNumber: req.body.accountNumber || 'Acc/Phone No',
     provider: req.body.provider || 'Bank / Payment Gateway',
-    status: 'Dispatched & Completed',
-    referenceCode: `TXN-${Date.now().toString().slice(-8)}`,
-    createdAt: new Date().toISOString()
+    status: req.body.status || 'Completed',
+    referenceCode: req.body.referenceCode || `TXN-${Date.now().toString().slice(-8)}`,
+    createdAt: req.body.createdAt || new Date().toISOString()
   };
 
   if (mongoose.connection.readyState === 1) {
     try {
       const mongoTransfer = new Transfer(newTransfer);
       await mongoTransfer.save();
-    } catch (e) {}
+    } catch (e) {
+      console.error('Error saving transfer to MongoDB:', e);
+    }
   }
 
-  const transfers = readData('transfers.json');
+  const transfers = readData('transfers.json') || [];
   transfers.unshift(newTransfer);
   writeData('transfers.json', transfers);
   res.status(201).json(newTransfer);
