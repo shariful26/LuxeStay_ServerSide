@@ -55,18 +55,10 @@ export async function seedMongoDBDatabase() {
       await Offer.insertMany(offers);
     }
 
-    // 5. Users & Role Migration
+    // 5. Users: Seeding from users.json disabled. All users managed 100% live in MongoDB Atlas.
     if (mongoose.connection.readyState === 1) {
       await User.updateMany({ role: 'partner' }, { $set: { role: 'manager' } });
-      const users = readData('users.json');
-      for (const u of users) {
-        if (u.email) {
-          const exists = await User.findOne({ email: u.email.toLowerCase() });
-          if (!exists) {
-            await User.create(u);
-          }
-        }
-      }
+      // users.json seeding disabled
     }
 
     // 6. Blogs

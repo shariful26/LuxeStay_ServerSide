@@ -31,10 +31,8 @@ router.get('/stats', async (req, res) => {
   if (hotelCount === 0) {
     const bookings = readData('bookings.json') || [];
     const hotels = readData('hotels.json') || [];
-    const users = readData('users.json') || [];
     hotelCount = hotels.length;
     bookingCount = bookings.length;
-    userCount = users.length;
     totalRevenue = bookings.reduce((sum, b) => sum + (Number(b.total) || 0), 0);
   }
 

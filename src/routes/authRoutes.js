@@ -2,7 +2,6 @@ import express from 'express';
 import bcrypt from 'bcryptjs';
 import mongoose from 'mongoose';
 import { User } from '../models/index.js';
-import { readData, writeData } from '../utils/fileDb.js';
 import { connectDatabase, isDbConnected } from '../config/db.js';
 
 const router = express.Router();
@@ -18,7 +17,6 @@ const sanitizeAvatar = (avatar, role = 'customer', name = 'User') => {
   return `https://ui-avatars.com/api/?name=${encodeURIComponent(name || 'User')}&background=0284c7&color=fff&bold=true`;
 };
 
-
 // --- 1. REGISTER ---
 router.post('/register', async (req, res) => {
   try {
@@ -29,12 +27,14 @@ router.post('/register', async (req, res) => {
     }
 
     const cleanEmail = String(email).trim().toLowerCase();
-    const existingUsers = readData('users.json') || [];
 
-    // Check local existing
-    const isLocalExist = existingUsers.some(u => u && u.email && u.email.toLowerCase() === cleanEmail);
-    if (isLocalExist) {
-      return res.status(400).json({ error: 'User account with this email already exists' });
+    // Check existing in real MongoDB Atlas
+    await connectDatabase();
+    if (mongoose.connection.readyState === 1) {
+      const existingUser = await User.findOne({ email: cleanEmail });
+      if (existingUser) {
+        return res.status(400).json({ error: 'User account with this email already exists' });
+      }
     }
 
     // Encrypt password securely (cost factor 6 for sub-10ms response)
@@ -53,23 +53,19 @@ router.post('/register', async (req, res) => {
       memberSince: '2026'
     };
 
-    // Save to local JSON immediately
-    existingUsers.unshift(newUserPayload);
-    writeData('users.json', existingUsers);
-
-    // Sync to MongoDB Atlas
-    await connectDatabase();
+    // Save directly to MongoDB Atlas
+    let createdUser = null;
     if (mongoose.connection.readyState === 1) {
-      try {
-        await User.create(newUserPayload);
-      } catch (e) {}
+      createdUser = await User.create(newUserPayload);
     }
+
+    const finalId = createdUser?.id || createdUser?._id?.toString() || newUserPayload.id;
 
     res.status(201).json({
       success: true,
       message: 'Account registered successfully',
       user: { 
-        id: newUserPayload.id, 
+        id: finalId, 
         name: newUserPayload.name, 
         email: newUserPayload.email, 
         role: newUserPayload.role, 
@@ -77,7 +73,7 @@ router.post('/register', async (req, res) => {
         phone: newUserPayload.phone,
         country: newUserPayload.country
       },
-      token: `jwt-token-${newUserPayload.id}`
+      token: `jwt-token-${finalId}`
     });
   } catch (err) {
     res.status(500).json({ error: 'Server error during registration' });
@@ -94,16 +90,20 @@ router.post('/google', async (req, res) => {
     }
 
     const cleanEmail = String(email).trim().toLowerCase();
-    const existingUsers = readData('users.json') || [];
-    let userObj = existingUsers.find(u => u && u.email && u.email.toLowerCase() === cleanEmail);
+    await connectDatabase();
+
+    let userObj = null;
+    if (mongoose.connection.readyState === 1) {
+      userObj = await User.findOne({ email: cleanEmail });
+    }
 
     if (userObj) {
       if (name) userObj.name = name;
       if (avatar && !avatar.startsWith('data:')) userObj.avatar = avatar;
-      writeData('users.json', existingUsers);
+      await userObj.save();
     } else {
       const defaultHashedPassword = await bcrypt.hash(`google_${uid || Date.now()}`, 6);
-      userObj = {
+      userObj = await User.create({
         id: `u_google_${Date.now()}`,
         name: name || cleanEmail.split('@')[0],
         email: cleanEmail,
@@ -113,25 +113,14 @@ router.post('/google', async (req, res) => {
         avatar: sanitizeAvatar(avatar, role),
         country: 'United States',
         memberSince: '2026'
-      };
-      existingUsers.unshift(userObj);
-      writeData('users.json', existingUsers);
-    }
-
-    // Sync to Mongo in background
-    if (isDbConnected()) {
-      User.findOneAndUpdate(
-        { email: cleanEmail },
-        { $set: userObj },
-        { upsert: true, new: true }
-      ).catch(() => {});
+      });
     }
 
     res.status(200).json({
       success: true,
       message: 'Google user authenticated successfully',
       user: {
-        id: userObj.id,
+        id: userObj.id || userObj._id?.toString(),
         name: userObj.name,
         email: userObj.email,
         role: userObj.role,
@@ -139,23 +128,20 @@ router.post('/google', async (req, res) => {
         phone: userObj.phone,
         country: userObj.country
       },
-      token: `jwt-token-${userObj.id}`
+      token: `jwt-token-${userObj.id || userObj._id}`
     });
   } catch (err) {
-    res.status(500).json({ error: 'Server error during Google authentication' });
+    res.status(500).json({ error: 'Google auth failed' });
   }
 });
 
-// --- 3. ULTRA-FAST LIVE MONGODB & SERVER LOGIN ---
+// --- 3. LOGIN ---
 router.post('/login', async (req, res) => {
   try {
     const { email, password, role } = req.body;
-
-    if (!email) {
-      return res.status(400).json({ error: 'Email address is required' });
-    }
-    if (!password) {
-      return res.status(400).json({ error: 'Password is required' });
+    
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email and password are required' });
     }
 
     const cleanEmail = String(email).trim().toLowerCase();
@@ -226,29 +212,15 @@ router.post('/forgot-password', async (req, res) => {
     if (!email) return res.status(400).json({ error: 'Email is required' });
 
     const cleanEmail = String(email).trim().toLowerCase();
-    const users = readData('users.json') || [];
-    let user = users.find(u => u && u.email && u.email.toLowerCase() === cleanEmail);
+    await connectDatabase();
+
+    let user = null;
+    if (mongoose.connection.readyState === 1) {
+      user = await User.findOne({ email: cleanEmail });
+    }
 
     if (!user) {
-      const defaultPassword = await bcrypt.hash('123456', 6);
-      user = {
-        id: `u_${Date.now()}`,
-        name: role === 'admin' ? 'Platform Admin' : role === 'manager' ? 'Hotel Manager' : cleanEmail.split('@')[0],
-        email: cleanEmail,
-        password: defaultPassword,
-        role: role || 'customer',
-        avatar: sanitizeAvatar(null, role),
-        phone: '+1 (555) 000-9988',
-        country: 'United States',
-        memberSince: '2026'
-      };
-
-      users.unshift(user);
-      writeData('users.json', users);
-
-      if (isDbConnected()) {
-        User.create(user).catch(() => {});
-      }
+      return res.status(404).json({ error: 'No user account found with this email address' });
     }
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
@@ -269,7 +241,7 @@ router.post('/forgot-password', async (req, res) => {
 // --- 5. RESET PASSWORD ---
 router.post('/reset-password', async (req, res) => {
   try {
-    const { email, otp, newPassword, role = 'customer' } = req.body;
+    const { email, otp, newPassword } = req.body;
     if (!email || !newPassword) {
       return res.status(400).json({ error: 'Email and new password are required' });
     }
@@ -281,33 +253,20 @@ router.post('/reset-password', async (req, res) => {
       return res.status(400).json({ error: 'Invalid or expired verification code' });
     }
 
-    let users = readData('users.json') || [];
-    let index = users.findIndex(u => u && u.email && u.email.toLowerCase() === cleanEmail);
-
+    await connectDatabase();
     const hashedPassword = await bcrypt.hash(String(newPassword), 6);
 
-    if (index !== -1) {
-      users[index].password = hashedPassword;
-    } else {
-      const newUser = {
-        id: `u_${Date.now()}`,
-        name: role === 'admin' ? 'Platform Admin' : role === 'manager' ? 'Hotel Manager' : cleanEmail.split('@')[0],
-        email: cleanEmail,
-        password: hashedPassword,
-        role,
-        phone: '+1 (555) 000-1122',
-        avatar: sanitizeAvatar(null, role),
-        country: 'United States',
-        memberSince: '2026'
-      };
-      users.unshift(newUser);
-      index = 0;
+    let updatedUser = null;
+    if (mongoose.connection.readyState === 1) {
+      updatedUser = await User.findOneAndUpdate(
+        { email: cleanEmail },
+        { $set: { password: hashedPassword } },
+        { new: true }
+      ).lean();
     }
 
-    writeData('users.json', users);
-
-    if (isDbConnected()) {
-      User.updateOne({ email: cleanEmail }, { $set: { password: hashedPassword } }, { upsert: true }).catch(() => {});
+    if (!updatedUser) {
+      return res.status(404).json({ error: 'User account not found' });
     }
 
     if (resetTokens.has(cleanEmail)) {
@@ -317,7 +276,12 @@ router.post('/reset-password', async (req, res) => {
     return res.json({
       success: true,
       message: 'Password reset and encrypted successfully.',
-      user: { id: users[index].id, name: users[index].name, email: users[index].email, role: users[index].role }
+      user: { 
+        id: updatedUser.id || updatedUser._id?.toString(), 
+        name: updatedUser.name, 
+        email: updatedUser.email, 
+        role: updatedUser.role 
+      }
     });
   } catch (err) {
     return res.status(500).json({ error: err.message || 'Server error resetting password' });

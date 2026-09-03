@@ -2,7 +2,6 @@ import express from 'express';
 import bcrypt from 'bcryptjs';
 import mongoose from 'mongoose';
 import { User } from '../models/index.js';
-import { readData, writeData } from '../utils/fileDb.js';
 import { connectDatabase } from '../config/db.js';
 
 const router = express.Router();
@@ -15,7 +14,7 @@ const getCleanAvatar = (avatar, name = 'User') => {
   return `https://ui-avatars.com/api/?name=${encodeURIComponent(name || 'User')}&background=0284c7&color=fff&bold=true`;
 };
 
-// GET all users (Live MongoDB with projection, pagination, and -password)
+// GET all users (100% Live MongoDB with projection, pagination, and -password)
 router.get('/', async (req, res) => {
   res.setHeader('Cache-Control', 'private, no-cache, no-store, must-revalidate');
 
@@ -34,7 +33,7 @@ router.get('/', async (req, res) => {
 
   const queryLimit = limit ? Math.min(Math.max(Number(limit) || 0, 1), 100) : 50;
   const queryPage = Math.max(Number(page) || 1, 1);
-  const projection = 'id name email role avatar phone country memberSince address city state zip status';
+  const projection = 'id name email role avatar phone country memberSince address city state zip status createdAt';
 
   let users = [];
   try {
@@ -49,12 +48,13 @@ router.get('/', async (req, res) => {
       users = await q.lean();
     }
   } catch (err) {
-    // safe fallback
+    // MongoDB query error
   }
 
   // Sanitize avatars in real MongoDB user list
   const sanitizedUsers = (users || []).map(u => ({
     ...u,
+    id: u.id || u._id?.toString(),
     avatar: getCleanAvatar(u.avatar, u.name)
   }));
 
@@ -100,24 +100,21 @@ router.get('/:id', async (req, res) => {
       email: safeUser.email || '',
       role: safeUser.role || 'customer',
       country: safeUser.country || 'United States',
+      address: safeUser.address || '',
+      city: safeUser.city || '',
+      state: safeUser.state || '',
+      zip: safeUser.zip || '',
       status: safeUser.role === 'manager' ? 'Property Host • Online' : (safeUser.role === 'admin' ? 'Administrator • Online' : 'Guest • Online')
     });
   }
 
   // Clean fallback without any fake face
-  res.json({
-    id: requestedId,
-    name: 'Verified Guest',
-    avatar: getCleanAvatar('', 'Verified Guest'),
-    phone: '',
-    email: `${requestedId}@luxestay.com`,
-    role: 'customer',
-    status: 'Guest • Online'
+  res.status(404).json({
+    error: 'User not found in database'
   });
 });
 
-
-// POST new user
+// POST new user directly into MongoDB
 router.post('/', async (req, res) => {
   await connectDatabase();
   const cleanEmail = req.body.email ? String(req.body.email).trim().toLowerCase() : '';
@@ -132,20 +129,19 @@ router.post('/', async (req, res) => {
     memberSince: new Date().getFullYear().toString()
   };
 
-  if (mongoose.connection.readyState === 1) {
-    try {
-      const mongoUser = new User(newUser);
-      await mongoUser.save();
-    } catch (e) {}
+  try {
+    if (mongoose.connection.readyState === 1) {
+      const created = await User.create(newUser);
+      return res.status(201).json(created);
+    }
+  } catch (e) {
+    return res.status(500).json({ error: 'Failed to create user in database' });
   }
 
-  const users = readData('users.json');
-  users.unshift(newUser);
-  writeData('users.json', users);
   res.status(201).json(newUser);
 });
 
-// PUT update user profile (Customer / Partner / Admin)
+// PUT update user profile (Customer / Partner / Admin) directly in MongoDB
 router.put('/profile', async (req, res) => {
   await connectDatabase();
   const { id, name, email, phone, country, avatar, address, city, state, zip, password } = req.body;
@@ -167,58 +163,40 @@ router.put('/profile', async (req, res) => {
 
     let dbUser = null;
     if (mongoose.connection.readyState === 1 && (cleanEmail || id)) {
-      try {
-        const filter = cleanEmail ? { email: cleanEmail } : { id: id };
-        dbUser = await User.findOneAndUpdate(
-          filter,
-          { 
-            $set: updateFields, 
-            $setOnInsert: { 
-              id: id || `u_${Date.now()}`, 
-              role: req.body.role || 'customer', 
-              memberSince: '2026' 
-            } 
-          },
-          { upsert: true, new: true }
-        ).lean();
-      } catch (e) {
-        // Mongo update fallback
-      }
+      const filter = cleanEmail ? { email: cleanEmail } : { $or: [{ id }, { _id: mongoose.isValidObjectId(id) ? id : null }] };
+      dbUser = await User.findOneAndUpdate(
+        filter,
+        { 
+          $set: updateFields, 
+          $setOnInsert: { 
+            id: id || `u_${Date.now()}`, 
+            role: req.body.role || 'customer', 
+            memberSince: '2026' 
+          } 
+        },
+        { upsert: true, new: true }
+      ).lean();
     }
 
-    const users = readData('users.json') || [];
-    const index = users.findIndex(u => (id && u.id === id) || (cleanEmail && u.email && u.email.toLowerCase() === cleanEmail));
-    
-    if (index !== -1) {
-      users[index] = { ...users[index], ...updateFields };
-    } else {
-      const newUser = {
-        id: id || dbUser?.id || `u_${Date.now()}`,
-        name: name || 'User',
-        email: cleanEmail || 'user@luxestay.com',
-        role: req.body.role || 'customer',
-        ...updateFields
-      };
-      users.unshift(newUser);
+    if (!dbUser) {
+      return res.status(404).json({ error: 'User could not be updated in database' });
     }
-    writeData('users.json', users);
 
-    const finalUser = dbUser || (index !== -1 ? users[index] : users[0]);
     res.json({
       success: true,
       message: 'Profile updated successfully',
       user: {
-        id: finalUser.id || finalUser._id?.toString() || id,
-        name: finalUser.name,
-        email: finalUser.email,
-        role: finalUser.role || 'customer',
-        avatar: finalUser.avatar,
-        phone: finalUser.phone,
-        country: finalUser.country,
-        address: finalUser.address,
-        city: finalUser.city,
-        state: finalUser.state,
-        zip: finalUser.zip
+        id: dbUser.id || dbUser._id?.toString() || id,
+        name: dbUser.name,
+        email: dbUser.email,
+        role: dbUser.role || 'customer',
+        avatar: dbUser.avatar,
+        phone: dbUser.phone,
+        country: dbUser.country,
+        address: dbUser.address,
+        city: dbUser.city,
+        state: dbUser.state,
+        zip: dbUser.zip
       }
     });
   } catch (err) {
@@ -226,7 +204,7 @@ router.put('/profile', async (req, res) => {
   }
 });
 
-// PUT change password securely
+// PUT change password securely in MongoDB
 router.put('/change-password', async (req, res) => {
   await connectDatabase();
   const { id, email, currentPassword, newPassword } = req.body;
@@ -239,20 +217,19 @@ router.put('/change-password', async (req, res) => {
     let mongoUserDoc = null;
 
     if (mongoose.connection.readyState === 1) {
-      try {
-        if (cleanEmail) {
-          mongoUserDoc = await User.findOne({ email: cleanEmail });
-        }
-        if (!mongoUserDoc && id) {
-          mongoUserDoc = await User.findOne({ $or: [{ id }, { _id: mongoose.isValidObjectId(id) ? id : null }] });
-        }
-      } catch (e) {}
+      if (cleanEmail) {
+        mongoUserDoc = await User.findOne({ email: cleanEmail });
+      }
+      if (!mongoUserDoc && id) {
+        mongoUserDoc = await User.findOne({ $or: [{ id }, { _id: mongoose.isValidObjectId(id) ? id : null }] });
+      }
     }
 
-    let users = readData('users.json');
-    let jsonUserIndex = users.findIndex(u => (u.id && u.id === id) || (cleanEmail && u.email && u.email.toLowerCase() === cleanEmail));
+    if (!mongoUserDoc) {
+      return res.status(404).json({ error: 'User account not found' });
+    }
 
-    let targetPasswordHash = mongoUserDoc?.password || (jsonUserIndex >= 0 ? users[jsonUserIndex].password : null);
+    const targetPasswordHash = mongoUserDoc.password;
 
     if (currentPassword && targetPasswordHash) {
       let isMatch = false;
@@ -269,15 +246,8 @@ router.put('/change-password', async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(String(newPassword), salt);
 
-    if (mongoUserDoc) {
-      mongoUserDoc.password = hashedPassword;
-      await mongoUserDoc.save();
-    }
-
-    if (jsonUserIndex >= 0) {
-      users[jsonUserIndex].password = hashedPassword;
-      writeData('users.json', users);
-    }
+    mongoUserDoc.password = hashedPassword;
+    await mongoUserDoc.save();
 
     res.status(200).json({
       success: true,
@@ -288,111 +258,60 @@ router.put('/change-password', async (req, res) => {
   }
 });
 
-// PUT update user by ID
+// PUT update user by ID directly in MongoDB
 router.put('/:id', async (req, res) => {
   await connectDatabase();
   try {
     let mongoUpdated = null;
     if (mongoose.connection.readyState === 1) {
-      try {
-        mongoUpdated = await User.findOneAndUpdate(
-          { $or: [{ id: req.params.id }, { _id: mongoose.isValidObjectId(req.params.id) ? req.params.id : null }] },
-          { $set: req.body },
-          { new: true }
-        ).lean();
-      } catch (e) {}
+      mongoUpdated = await User.findOneAndUpdate(
+        { $or: [{ id: req.params.id }, { _id: mongoose.isValidObjectId(req.params.id) ? req.params.id : null }] },
+        { $set: req.body },
+        { new: true }
+      ).lean();
     }
 
-    let users = readData('users.json');
-    const index = users.findIndex(u => u.id === req.params.id);
-    if (index === -1 && !mongoUpdated) return res.status(404).json({ error: 'User not found' });
+    if (!mongoUpdated) return res.status(404).json({ error: 'User not found' });
 
-    if (index !== -1) {
-      const { name, email, phone, country, role, avatar, password } = req.body;
-      if (name) users[index].name = name;
-      if (email) users[index].email = email.toLowerCase();
-      if (phone) users[index].phone = phone;
-      if (country) users[index].country = country;
-      if (role) users[index].role = role;
-      if (avatar) users[index].avatar = avatar;
-      if (password) users[index].password = password;
-      writeData('users.json', users);
-    }
-
-    res.json({ success: true, user: mongoUpdated || (index !== -1 ? users[index] : req.body) });
+    res.json({ success: true, user: mongoUpdated });
   } catch (err) {
     res.status(500).json({ error: 'Failed to update user' });
   }
 });
 
-// PUT update user role
+// PUT update user role directly in MongoDB
 router.put('/:id/role', async (req, res) => {
   await connectDatabase();
   const targetRole = req.body.role;
-  let mongoUpdated = null;
-  if (mongoose.connection.readyState === 1) {
-    try {
+  try {
+    let mongoUpdated = null;
+    if (mongoose.connection.readyState === 1) {
       mongoUpdated = await User.findOneAndUpdate(
         { $or: [{ id: req.params.id }, { _id: mongoose.isValidObjectId(req.params.id) ? req.params.id : null }] },
         { $set: { role: targetRole } },
         { new: true }
       ).lean();
-    } catch (e) {}
-  }
+    }
 
-  let users = readData('users.json');
-  const index = users.findIndex(u => u.id === req.params.id);
-  if (index !== -1) {
-    users[index].role = targetRole || users[index].role;
-    writeData('users.json', users);
-    return res.json(mongoUpdated || users[index]);
+    if (!mongoUpdated) return res.status(404).json({ error: 'User not found' });
+    res.json({ success: true, user: mongoUpdated });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to update role' });
   }
-  if (mongoUpdated) return res.json(mongoUpdated);
-  res.json({ success: true, message: 'Role updated' });
 });
 
-// DELETE user by ID
+// DELETE user by ID directly from MongoDB
 router.delete('/:id', async (req, res) => {
   await connectDatabase();
-  if (mongoose.connection.readyState === 1) {
-    try {
+  try {
+    if (mongoose.connection.readyState === 1) {
       await User.deleteOne({
         $or: [{ id: req.params.id }, { _id: mongoose.isValidObjectId(req.params.id) ? req.params.id : null }]
       });
-    } catch (e) {}
-  }
-
-  let users = readData('users.json');
-  users = users.filter(u => u.id !== req.params.id);
-  writeData('users.json', users);
-  res.json({ success: true, message: 'User deleted successfully' });
-});
-
-// GET user by ID
-router.get('/:id', async (req, res) => {
-  await connectDatabase();
-  try {
-    let foundUser = null;
-    if (mongoose.connection.readyState === 1) {
-      try {
-        foundUser = await User.findOne({
-          $or: [{ id: req.params.id }, { _id: mongoose.isValidObjectId(req.params.id) ? req.params.id : null }]
-        }).lean();
-      } catch (e) {}
     }
-
-    if (!foundUser) {
-      let users = readData('users.json');
-      foundUser = users.find(u => u.id === req.params.id);
-    }
-
-    if (!foundUser) return res.status(404).json({ error: 'User not found' });
-    
-    // Return user details without password hash
-    const { password, ...safeUser } = foundUser;
-    res.json(safeUser);
+    res.json({ success: true, message: 'User deleted successfully' });
   } catch (err) {
-    res.status(500).json({ error: 'Failed to retrieve user details' });
+    res.status(500).json({ error: 'Failed to delete user' });
   }
 });
 
