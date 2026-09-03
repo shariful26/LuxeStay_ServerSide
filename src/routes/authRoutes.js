@@ -10,73 +10,6 @@ const router = express.Router();
 // Reset Tokens In-Memory Store for OTP recovery
 export const resetTokens = new Map();
 
-// Pre-configured instant high-speed demo accounts
-const DEMO_USERS = {
-  'customer@luxestay.com': {
-    id: 'u_customer_demo',
-    name: 'Alice Johnson',
-    email: 'customer@luxestay.com',
-    role: 'customer',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
-    phone: '+1 (555) 000-1122',
-    country: 'United States'
-  },
-  'manager@luxestay.com': {
-    id: 'u_manager_demo',
-    name: 'Shariful Islam (Hotel Manager)',
-    email: 'manager@luxestay.com',
-    role: 'manager',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80',
-    phone: '+1 (555) 000-1122',
-    country: 'United States'
-  },
-  'admin@luxestay.com': {
-    id: 'u_admin_demo',
-    name: 'System Administrator',
-    email: 'admin@luxestay.com',
-    role: 'admin',
-    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=200&q=80',
-    phone: '+1 (555) 000-1122',
-    country: 'United States'
-  },
-  'sharif@gmail.com': {
-    id: 'u_admin_sharif',
-    name: 'Shariful Islam (Admin)',
-    email: 'sharif@gmail.com',
-    role: 'admin',
-    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=200&q=80',
-    phone: '+1 (555) 000-1122',
-    country: 'United States'
-  },
-  'shariful@gmail.com': {
-    id: 'u_admin_shariful',
-    name: 'Shariful Islam (Admin)',
-    email: 'shariful@gmail.com',
-    role: 'admin',
-    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=200&q=80',
-    phone: '+1 (555) 000-1122',
-    country: 'United States'
-  },
-  'sharifulalam@gmail.com': {
-    id: 'u_1787910184068',
-    name: 'Shariful Islam (Hotel Manager)',
-    email: 'sharifulalam@gmail.com',
-    role: 'manager',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80',
-    phone: '+1 (555) 000-1122',
-    country: 'United States'
-  },
-  'sharifu@gmail.com': {
-    id: 'u_1787778746202',
-    name: 'Shariful Islam (Customer)',
-    email: 'sharifu@gmail.com',
-    role: 'customer',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
-    phone: '+1 (555) 234-5678',
-    country: 'United States'
-  }
-};
-
 // In-Memory Fast Lookup Helper - Preserves user avatar (custom URLs, uploads & base64)
 const sanitizeAvatar = (avatar, role = 'customer') => {
   if (avatar && typeof avatar === 'string' && avatar.trim().length > 0) {
@@ -245,30 +178,7 @@ router.post('/login', async (req, res) => {
       userObj = existingUsers.find(u => u && u.email && u.email.toLowerCase() === cleanEmail);
     }
 
-    // 3. Pre-seeded high-speed demo accounts fallback only if completely new
-    if (!userObj && DEMO_USERS[cleanEmail]) {
-      const demo = DEMO_USERS[cleanEmail];
-      const defaultHash = await bcrypt.hash('123456', 6);
-      userObj = {
-        id: demo.id,
-        name: demo.name,
-        email: demo.email,
-        password: defaultHash,
-        role: demo.role || targetRole,
-        phone: demo.phone,
-        avatar: demo.avatar,
-        country: demo.country || 'United States',
-        memberSince: '2026'
-      };
-      const existingUsers = readData('users.json') || [];
-      existingUsers.unshift(userObj);
-      writeData('users.json', existingUsers);
-      if (mongoose.connection.readyState === 1) {
-        User.create(userObj).catch(() => {});
-      }
-    }
-
-    // If account not found anywhere
+    // If account not found in MongoDB Atlas
     if (!userObj) {
       return res.status(401).json({ error: 'Account does not exist. Please register first.' });
     }

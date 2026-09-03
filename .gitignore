@@ -5,3 +5,5 @@ logs
 *.log
 npm-debug.log*
 .DS_Store
+testMongo.js
+
