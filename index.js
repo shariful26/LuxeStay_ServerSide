@@ -45,7 +45,7 @@ app.get('/', (req, res) => {
   res.json({
     status: 'online',
     name: 'LuxeStay Hospitality REST API Gateway',
-    version: '1.0.0',
+    version: '1.0.1 - Live MongoDB Verified',
     documentation: '/DOCUMENTATION.md'
   });
 });
