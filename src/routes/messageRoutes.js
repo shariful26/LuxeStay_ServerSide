@@ -260,8 +260,14 @@ router.post('/clear-conversation', async (req, res) => {
       { senderRole: u2, recipientId: u1 },
       { senderRole: u1, recipientRole: u2 },
       { senderRole: u2, recipientRole: u1 },
-      { senderId: u1, recipientId: { $in: ['manager', 'admin', 'customer', u2] } },
-      { recipientId: u1, senderId: { $in: ['manager', 'admin', 'customer', u2] } }
+      { senderRole: 'customer', recipientRole: 'manager' },
+      { senderRole: 'manager', recipientRole: 'customer' },
+      { senderRole: 'customer', recipientId: 'manager' },
+      { senderId: 'manager', recipientRole: 'customer' },
+      { senderRole: 'customer', recipientRole: 'admin' },
+      { senderRole: 'admin', recipientRole: 'customer' },
+      { senderRole: 'manager', recipientRole: 'admin' },
+      { senderRole: 'admin', recipientRole: 'manager' }
     ]
   };
 
@@ -275,12 +281,16 @@ router.post('/clear-conversation', async (req, res) => {
   inMemoryMessages = store.filter(m => {
     const sId = String(m.senderId || '');
     const rId = String(m.recipientId || '');
-    const match = 
-      (sId === u1 && rId === u2) ||
-      (sId === u2 && rId === u1) ||
-      (sId === u1 && (m.recipientRole === u2 || rId === 'manager' || rId === 'admin')) ||
-      (sId === u2 && (m.recipientRole === u1 || rId === 'manager' || rId === 'admin'));
-    return !match;
+    const sRole = String(m.senderRole || '');
+    const rRole = String(m.recipientRole || '');
+
+    const isMatch = 
+      (sId === u1 && rId === u2) || (sId === u2 && rId === u1) ||
+      (sId === u1 && rRole === u2) || (sId === u2 && rRole === u1) ||
+      (sRole === u1 && rId === u2) || (sRole === u2 && rId === u1) ||
+      (sRole === u1 && rRole === u2) || (sRole === u2 && rRole === u1) ||
+      ((sRole === 'customer' || sId === 'customer' || u1 === 'customer' || u2 === 'customer') && (rRole === 'manager' || rId === 'manager' || u1 === 'manager' || u2 === 'manager'));
+    return !isMatch;
   });
 
   writeData('messages.json', inMemoryMessages);
