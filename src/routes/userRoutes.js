@@ -71,9 +71,8 @@ router.get('/:id', async (req, res) => {
   if (mongoose.connection.readyState === 1) {
     try {
       if (requestedId === 'manager' || requestedId === 'partner' || requestedId === 'p1') {
-        user = await User.findOne({ role: 'manager', phone: { $regex: /880/ } }).select('-password').lean()
-            || await User.findOne({ role: 'manager', phone: { $exists: true, $ne: '+1 (555) 000-1122' } }).select('-password').lean()
-            || await User.findOne({ role: 'manager' }).sort({ createdAt: -1 }).select('-password').lean();
+        user = await User.findOne({ email: 'manager@luxestay.com' }).select('-password').lean()
+            || await User.findOne({ role: 'manager' }).sort({ updatedAt: -1 }).select('-password').lean();
       } else if (requestedId === 'admin') {
         user = await User.findOne({ role: 'admin' }).select('-password').lean();
       } else if (requestedId === 'customer') {
@@ -97,7 +96,7 @@ router.get('/:id', async (req, res) => {
 
     return res.json({
       id: safeUser.id || safeUser._id?.toString() || requestedId,
-      name: safeUser.name || 'LuxeStay Member',
+      name: (safeUser.name && safeUser.name !== 'manager') ? safeUser.name : 'Shariful Islam (Hotel Manager)',
       avatar: cleanAvatar,
       phone: safeUser.phone || '',
       email: safeUser.email || '',
