@@ -6,6 +6,7 @@ logs
 npm-debug.log*
 .DS_Store
 testMongo.js
+testUsers.js
 *.zip
 
 
