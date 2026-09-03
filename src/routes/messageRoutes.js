@@ -57,7 +57,7 @@ router.get('/', async (req, res) => {
   let dbMessages = [];
   try {
     dbMessages = await Message.find(query)
-      .select('id senderId senderName senderRole senderAvatar recipientId recipientName recipientRole text time read createdAt')
+      .select('id senderId senderName senderRole senderAvatar recipientId recipientName recipientRole text time read edited createdAt')
       .sort({ createdAt: -1 })
       .limit(maxLimit)
       .lean();
@@ -68,39 +68,41 @@ router.get('/', async (req, res) => {
     // safe fallback
   }
 
-  // Pure real MongoDB messages (no fake messages.json data)
   res.json(dbMessages || []);
 });
 
-// POST send new message
+// POST send new message (Preserves client payload ID for 100% exact matching)
 router.post('/', async (req, res) => {
+  res.setHeader('Cache-Control', 'private, no-cache, no-store, must-revalidate');
   await connectDatabase();
+
+  const msgId = req.body.id || `msg-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+
   const newMessage = {
-    id: `msg-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-    senderId: req.body.senderId,
+    id: msgId,
+    senderId: String(req.body.senderId || '').trim(),
     senderName: req.body.senderName,
     senderRole: req.body.senderRole,
     senderAvatar: req.body.senderAvatar || '',
-    recipientId: req.body.recipientId,
+    recipientId: String(req.body.recipientId || '').trim(),
     recipientName: req.body.recipientName,
     recipientRole: req.body.recipientRole || (req.body.senderRole === 'customer' ? 'manager' : 'customer'),
     text: req.body.text,
     time: req.body.time || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     read: false,
-    createdAt: new Date()
+    edited: false,
+    createdAt: req.body.createdAt ? new Date(req.body.createdAt) : new Date()
   };
 
-  // Push to in-memory store immediately
   const store = getMessagesStore();
   store.push(newMessage);
 
-  // Direct persistence to MongoDB Atlas
   try {
-    const mongoMsg = new Message(newMessage);
-    await mongoMsg.save();
-  } catch (err) {
-    // safe fallback
-  }
+    if (mongoose.connection.readyState === 1) {
+      const mongoMsg = new Message(newMessage);
+      await mongoMsg.save();
+    }
+  } catch (err) {}
 
   writeData('messages.json', store);
   res.status(201).json(newMessage);
@@ -108,6 +110,7 @@ router.post('/', async (req, res) => {
 
 // PUT mark messages as read
 router.put('/read', async (req, res) => {
+  res.setHeader('Cache-Control', 'private, no-cache, no-store, must-revalidate');
   await connectDatabase();
   const { senderId, recipientId, role } = req.body;
   if (!senderId) {
@@ -172,8 +175,9 @@ router.put('/read', async (req, res) => {
   res.json({ success: true, message: 'Messages marked as read' });
 });
 
-// PUT edit individual message
+// PUT edit individual message (Single message text edit)
 router.put('/:id', async (req, res) => {
+  res.setHeader('Cache-Control', 'private, no-cache, no-store, must-revalidate');
   await connectDatabase();
   const { id } = req.params;
   const { text } = req.body;
@@ -183,53 +187,60 @@ router.put('/:id', async (req, res) => {
   }
 
   const cleanText = String(text).trim();
+  const targetId = String(id).trim();
 
+  let mongoUpdated = null;
   try {
     if (mongoose.connection.readyState === 1) {
-      await Message.findOneAndUpdate(
-        { $or: [{ id: String(id) }, { _id: mongoose.isValidObjectId(id) ? id : null }] },
-        { $set: { text: cleanText, edited: true } }
-      );
+      mongoUpdated = await Message.findOneAndUpdate(
+        { $or: [{ id: targetId }, { _id: mongoose.isValidObjectId(targetId) ? targetId : null }] },
+        { $set: { text: cleanText, edited: true } },
+        { new: true }
+      ).lean();
     }
   } catch (err) {}
 
   const store = getMessagesStore();
-  const target = store.find(m => String(m.id) === String(id));
+  const target = store.find(m => String(m.id) === targetId || String(m._id) === targetId);
   if (target) {
     target.text = cleanText;
     target.edited = true;
     writeData('messages.json', store);
-    return res.json(target);
+    return res.json(mongoUpdated || target);
   }
 
-  res.json({ id, text: cleanText, edited: true, success: true });
+  if (mongoUpdated) return res.json(mongoUpdated);
+  res.json({ id: targetId, text: cleanText, edited: true, success: true });
 });
 
-// DELETE individual message
+// DELETE individual message (Single message delete)
 router.delete('/:id', async (req, res) => {
+  res.setHeader('Cache-Control', 'private, no-cache, no-store, must-revalidate');
   await connectDatabase();
   const { id } = req.params;
+  const targetId = String(id).trim();
 
   try {
     if (mongoose.connection.readyState === 1) {
-      await Message.deleteOne({
-        $or: [{ id: String(id) }, { _id: mongoose.isValidObjectId(id) ? id : null }]
+      await Message.deleteMany({
+        $or: [
+          { id: targetId },
+          { _id: mongoose.isValidObjectId(targetId) ? targetId : null }
+        ]
       });
     }
   } catch (err) {}
 
   const store = getMessagesStore();
-  const idx = store.findIndex(m => String(m.id) === String(id));
-  if (idx !== -1) {
-    store.splice(idx, 1);
-    writeData('messages.json', store);
-  }
+  inMemoryMessages = store.filter(m => String(m.id) !== targetId && String(m._id) !== targetId);
+  writeData('messages.json', inMemoryMessages);
 
-  res.json({ success: true, message: 'Message deleted', id });
+  res.json({ success: true, message: 'Message deleted successfully', id: targetId });
 });
 
-// DELETE all messages in conversation (3-dot Clear Chat)
+// DELETE all messages in conversation (3-dot Clear Chat Action)
 router.post('/clear-conversation', async (req, res) => {
+  res.setHeader('Cache-Control', 'private, no-cache, no-store, must-revalidate');
   await connectDatabase();
   const { user1, user2 } = req.body;
   if (!user1 || !user2) {
@@ -248,7 +259,9 @@ router.post('/clear-conversation', async (req, res) => {
       { senderRole: u1, recipientId: u2 },
       { senderRole: u2, recipientId: u1 },
       { senderRole: u1, recipientRole: u2 },
-      { senderRole: u2, recipientRole: u1 }
+      { senderRole: u2, recipientRole: u1 },
+      { senderId: u1, recipientId: { $in: ['manager', 'admin', 'customer', u2] } },
+      { recipientId: u1, senderId: { $in: ['manager', 'admin', 'customer', u2] } }
     ]
   };
 
@@ -259,17 +272,19 @@ router.post('/clear-conversation', async (req, res) => {
   } catch (err) {}
 
   const store = getMessagesStore();
-  const remaining = store.filter(m => {
+  inMemoryMessages = store.filter(m => {
+    const sId = String(m.senderId || '');
+    const rId = String(m.recipientId || '');
     const match = 
-      (String(m.senderId) === u1 && String(m.recipientId) === u2) ||
-      (String(m.senderId) === u2 && String(m.recipientId) === u1) ||
-      (String(m.senderId) === u1 && m.recipientRole === u2) ||
-      (String(m.senderId) === u2 && m.recipientRole === u1);
+      (sId === u1 && rId === u2) ||
+      (sId === u2 && rId === u1) ||
+      (sId === u1 && (m.recipientRole === u2 || rId === 'manager' || rId === 'admin')) ||
+      (sId === u2 && (m.recipientRole === u1 || rId === 'manager' || rId === 'admin'));
     return !match;
   });
 
-  writeData('messages.json', remaining);
-  res.json({ success: true, message: 'All messages in conversation deleted' });
+  writeData('messages.json', inMemoryMessages);
+  res.json({ success: true, message: 'All messages in conversation deleted successfully' });
 });
 
 export default router;
