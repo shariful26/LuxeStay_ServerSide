@@ -151,7 +151,10 @@ router.post('/login', async (req, res) => {
     let userObj = null;
     if (mongoose.connection.readyState === 1) {
       try {
-        userObj = await User.findOne({ email: cleanEmail }).lean();
+        userObj = await User.findOne({ 
+          email: cleanEmail,
+          id: { $ne: 'u_customer_demo' }
+        }).lean();
       } catch (findErr) {}
     }
 
@@ -300,7 +303,10 @@ router.get('/me', async (req, res) => {
 
     if (mongoose.connection.readyState === 1) {
       if (queryEmail) {
-        user = await User.findOne({ email: String(queryEmail).trim().toLowerCase() }).select('-password').lean();
+        user = await User.findOne({ 
+          email: String(queryEmail).trim().toLowerCase(),
+          id: { $ne: 'u_customer_demo' }
+        }).select('-password').lean();
       } else if (queryId) {
         user = await User.findOne({ 
           $or: [

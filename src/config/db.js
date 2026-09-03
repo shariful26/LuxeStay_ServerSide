@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import { seedMongoDBDatabase } from '../seed/seeder.js';
+import { User } from '../models/User.js';
 
 let cached = global.mongoose;
 
@@ -33,6 +34,8 @@ export const connectDatabase = async () => {
       console.log('MongoDB Atlas Connected Successfully!');
       if (!cached.seeded) {
         cached.seeded = true;
+        // Purge old demo user records so real MongoDB users take precedence
+        User.deleteMany({ id: { $in: ['u_customer_demo', 'u_manager_demo', 'u_admin_demo'] } }).catch(() => {});
         // Run initial seed if collections are empty
         seedMongoDBDatabase().catch(() => {});
       }

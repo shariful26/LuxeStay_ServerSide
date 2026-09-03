@@ -75,14 +75,15 @@ router.get('/:id', async (req, res) => {
       } else if (requestedId === 'admin') {
         user = await User.findOne({ role: 'admin' }).select('-password').lean();
       } else if (requestedId === 'customer') {
-        user = await User.findOne({ role: 'customer' }).select('-password').lean();
+        user = await User.findOne({ role: 'customer', id: { $ne: 'u_customer_demo' } }).select('-password').lean();
       } else {
         user = await User.findOne({
           $or: [
             { id: requestedId },
             { email: requestedId.toLowerCase() },
             { _id: mongoose.isValidObjectId(requestedId) ? requestedId : null }
-          ]
+          ],
+          id: { $ne: 'u_customer_demo' }
         }).select('-password').lean();
       }
     } catch (e) {}
