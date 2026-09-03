@@ -6,60 +6,128 @@ import { connectDatabase } from '../config/db.js';
 
 const router = express.Router();
 
-// GET all hotels with search and advanced filters
+// GET all hotels with search, pagination, projection, and advanced filters
 router.get('/', async (req, res) => {
+  // Public edge caching for read-only catalog
+  res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=600');
+
   await connectDatabase();
+  const { search, destination, minPrice, maxPrice, rating, category, featured, partnerId, partnerEmail, status, isPublic, limit, page, fields } = req.query;
+
+  const mongoFilter = {};
+
+  if (partnerId) {
+    mongoFilter.$or = [
+      { partnerId: String(partnerId) },
+      ...(partnerEmail ? [{ partnerEmail: String(partnerEmail).toLowerCase() }] : [])
+    ];
+  }
+
+  if (status) {
+    mongoFilter.status = { $regex: new RegExp(`^${status}$`, 'i') };
+  } else if (isPublic === 'true') {
+    mongoFilter.status = { $nin: ['pending approval', 'pending', 'rejected'] };
+  }
+
+  if (search && String(search).trim().length > 0) {
+    const q = String(search).trim();
+    mongoFilter.$or = [
+      { name: { $regex: q, $options: 'i' } },
+      { destination: { $regex: q, $options: 'i' } },
+      { category: { $regex: q, $options: 'i' } }
+    ];
+  }
+
+  if (destination) {
+    mongoFilter.$or = [
+      { destinationSlug: destination },
+      { destination: { $regex: destination, $options: 'i' } }
+    ];
+  }
+
+  if (category) {
+    mongoFilter.category = { $regex: new RegExp(`^${category}$`, 'i') };
+  }
+
+  if (minPrice || maxPrice) {
+    mongoFilter.pricePerNight = {};
+    if (minPrice) mongoFilter.pricePerNight.$gte = Number(minPrice);
+    if (maxPrice) mongoFilter.pricePerNight.$lte = Number(maxPrice);
+  }
+
+  if (rating) {
+    mongoFilter.rating = { $gte: Number(rating) };
+  }
+
+  if (featured === 'true') {
+    mongoFilter.featured = true;
+  }
+
+  const queryLimit = limit ? Math.min(Math.max(Number(limit) || 0, 1), 100) : 0;
+  const queryPage = Math.max(Number(page) || 1, 1);
+
+  // Field projection: minimal fields for fast autocomplete search, list fields for standard view
+  const isCompactSearch = queryLimit > 0 && queryLimit <= 5;
+  const projection = isCompactSearch || fields === 'compact'
+    ? 'id name slug destination destinationSlug pricePerNight rating images category featured status'
+    : 'id name slug tagline destination destinationSlug address pricePerNight rating reviewCount starRating featured category images amenities status partnerId partnerName';
+
   let hotels = [];
   try {
     if (mongoose.connection.readyState === 1) {
-      hotels = await Hotel.find({}).lean();
+      let q = Hotel.find(mongoFilter).select(projection).lean();
+      if (queryLimit > 0) {
+        q = q.skip((queryPage - 1) * queryLimit).limit(queryLimit);
+      }
+      hotels = await q;
     }
   } catch (err) {
     // safe fallback
   }
 
   if (!hotels || hotels.length === 0) {
-    hotels = readData('hotels.json');
-  }
+    hotels = readData('hotels.json') || [];
 
-  const { search, destination, minPrice, maxPrice, rating, category, featured, partnerId, partnerEmail, status, isPublic } = req.query;
+    if (partnerId) {
+      const pid = String(partnerId);
+      hotels = hotels.filter(h => (h.partnerId && String(h.partnerId) === pid) || (h.partnerEmail && partnerEmail && h.partnerEmail.toLowerCase() === partnerEmail.toLowerCase()));
+    }
 
-  if (partnerId) {
-    const pid = String(partnerId);
-    hotels = hotels.filter(h => (h.partnerId && String(h.partnerId) === pid) || (h.partnerEmail && partnerEmail && h.partnerEmail.toLowerCase() === partnerEmail.toLowerCase()));
-  }
+    if (status) {
+      hotels = hotels.filter(h => h.status && h.status.toLowerCase() === status.toLowerCase());
+    } else if (isPublic === 'true') {
+      hotels = hotels.filter(h => {
+        if (!h.status) return true;
+        const s = String(h.status).toLowerCase();
+        return s === 'approved' || s === 'active' || (s !== 'pending approval' && s !== 'pending' && s !== 'rejected');
+      });
+    }
 
-  if (status) {
-    hotels = hotels.filter(h => h.status && h.status.toLowerCase() === status.toLowerCase());
-  } else if (isPublic === 'true') {
-    hotels = hotels.filter(h => {
-      if (!h.status) return true;
-      const s = String(h.status).toLowerCase();
-      return s === 'approved' || s === 'active' || (s !== 'pending approval' && s !== 'pending' && s !== 'rejected');
-    });
-  }
-
-  if (search) {
-    const q = search.toLowerCase();
-    hotels = hotels.filter(h => (h.name && h.name.toLowerCase().includes(q)) || (h.destination && h.destination.toLowerCase().includes(q)));
-  }
-  if (destination) {
-    hotels = hotels.filter(h => h.destinationSlug === destination || (h.destination && h.destination.toLowerCase().includes(destination.toLowerCase())));
-  }
-  if (category) {
-    hotels = hotels.filter(h => h.category && h.category.toLowerCase() === category.toLowerCase());
-  }
-  if (minPrice) {
-    hotels = hotels.filter(h => h.pricePerNight >= Number(minPrice));
-  }
-  if (maxPrice) {
-    hotels = hotels.filter(h => h.pricePerNight <= Number(maxPrice));
-  }
-  if (rating) {
-    hotels = hotels.filter(h => h.rating >= Number(rating));
-  }
-  if (featured === 'true') {
-    hotels = hotels.filter(h => h.featured);
+    if (search) {
+      const q = search.toLowerCase();
+      hotels = hotels.filter(h => (h.name && h.name.toLowerCase().includes(q)) || (h.destination && h.destination.toLowerCase().includes(q)));
+    }
+    if (destination) {
+      hotels = hotels.filter(h => h.destinationSlug === destination || (h.destination && h.destination.toLowerCase().includes(destination.toLowerCase())));
+    }
+    if (category) {
+      hotels = hotels.filter(h => h.category && h.category.toLowerCase() === category.toLowerCase());
+    }
+    if (minPrice) {
+      hotels = hotels.filter(h => h.pricePerNight >= Number(minPrice));
+    }
+    if (maxPrice) {
+      hotels = hotels.filter(h => h.pricePerNight <= Number(maxPrice));
+    }
+    if (rating) {
+      hotels = hotels.filter(h => h.rating >= Number(rating));
+    }
+    if (featured === 'true') {
+      hotels = hotels.filter(h => h.featured);
+    }
+    if (queryLimit > 0) {
+      hotels = hotels.slice((queryPage - 1) * queryLimit, queryPage * queryLimit);
+    }
   }
 
   res.json(hotels);

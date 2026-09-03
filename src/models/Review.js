@@ -17,4 +17,8 @@ const reviewSchema = new mongoose.Schema({
   partnerReply: { type: Object, default: null }
 }, { timestamps: true });
 
+reviewSchema.index({ hotelId: 1, createdAt: -1 });
+reviewSchema.index({ status: 1, visibility: 1 });
+
 export const Review = mongoose.models.Review || mongoose.model('Review', reviewSchema);
+

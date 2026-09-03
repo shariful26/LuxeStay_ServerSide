@@ -22,5 +22,14 @@ const HotelSchema = new mongoose.Schema({
   status: String
 }, { timestamps: true, strict: false });
 
+HotelSchema.index({ id: 1 }, { unique: true, sparse: true });
+HotelSchema.index({ slug: 1 });
+HotelSchema.index({ destination: 1 });
+HotelSchema.index({ destinationSlug: 1 });
+HotelSchema.index({ category: 1 });
+HotelSchema.index({ featured: 1, status: 1 });
+HotelSchema.index({ partnerId: 1 });
+HotelSchema.index({ status: 1 });
+
 export const Hotel = mongoose.models.Hotel || mongoose.model('Hotel', HotelSchema);
 export default Hotel;

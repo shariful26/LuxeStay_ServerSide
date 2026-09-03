@@ -16,5 +16,9 @@ const UserSchema = new mongoose.Schema({
   zip: String
 }, { timestamps: true, strict: false });
 
+UserSchema.index({ email: 1 }, { unique: true });
+UserSchema.index({ role: 1 });
+UserSchema.index({ id: 1 }, { sparse: true });
+
 export const User = mongoose.models.User || mongoose.model('User', UserSchema);
 export default User;

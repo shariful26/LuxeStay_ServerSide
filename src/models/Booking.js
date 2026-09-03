@@ -25,5 +25,11 @@ const BookingSchema = new mongoose.Schema({
   userId: String
 }, { timestamps: true, strict: false });
 
+BookingSchema.index({ userId: 1, createdAt: -1 });
+BookingSchema.index({ guestEmail: 1 });
+BookingSchema.index({ hotelId: 1, createdAt: -1 });
+BookingSchema.index({ status: 1 });
+BookingSchema.index({ roomId: 1, checkIn: 1, checkOut: 1 });
+
 export const Booking = mongoose.models.Booking || mongoose.model('Booking', BookingSchema);
 export default Booking;

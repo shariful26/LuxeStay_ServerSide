@@ -15,26 +15,87 @@ const datesOverlap = (startA, endA, startB, endB) => {
   return aIn < bOut && aOut > bIn;
 };
 
-// GET bookings (Live from MongoDB Atlas with JSON fallback)
+// GET bookings (Live from MongoDB Atlas with user/role filtering & pagination)
 router.get('/', async (req, res) => {
+  res.setHeader('Cache-Control', 'private, no-cache, no-store, must-revalidate');
+
   await connectDatabase();
+  const { userId, guestEmail, hotelId, status, role, limit, page } = req.query;
+
+  const mongoFilter = {};
+
+  if (userId || guestEmail) {
+    const filters = [];
+    if (userId) {
+      const cleanId = String(userId).trim();
+      filters.push({ userId: cleanId }, { guestEmail: cleanId.toLowerCase() });
+    }
+    if (guestEmail) {
+      filters.push({ guestEmail: String(guestEmail).trim().toLowerCase() });
+    }
+    mongoFilter.$or = filters;
+  } else if (role === 'customer') {
+    // Ordinary customers must never download global bookings collection
+    return res.json([]);
+  }
+
+  if (hotelId) {
+    mongoFilter.hotelId = String(hotelId);
+  }
+
+  if (status) {
+    mongoFilter.status = { $regex: new RegExp(`^${status}$`, 'i') };
+  }
+
+  const queryLimit = limit ? Math.min(Math.max(Number(limit) || 0, 1), 100) : 50;
+  const queryPage = Math.max(Number(page) || 1, 1);
+
+  const projection = 'id hotelId hotelName roomId roomName guestName guestEmail guestPhone checkIn checkOut nights guests nightlyRate subtotal addOns discount tax total currency paymentMethod status userId createdAt';
+
   let bookings = [];
   try {
     if (mongoose.connection.readyState === 1) {
-      bookings = await Booking.find({}).lean();
+      let q = Booking.find(mongoFilter)
+        .select(projection)
+        .sort({ createdAt: -1 });
+
+      if (queryLimit > 0) {
+        q = q.skip((queryPage - 1) * queryLimit).limit(queryLimit);
+      }
+      bookings = await q.lean();
     }
   } catch (err) {
     // safe fallback
   }
 
   if (!bookings || bookings.length === 0) {
-    bookings = readData('bookings.json');
+    let localBookings = readData('bookings.json') || [];
+
+    if (userId || guestEmail) {
+      const uId = userId ? String(userId).trim().toLowerCase() : '';
+      const gEmail = guestEmail ? String(guestEmail).trim().toLowerCase() : '';
+      localBookings = localBookings.filter(b => 
+        (uId && (String(b.userId || '').toLowerCase() === uId || String(b.guestEmail || '').toLowerCase() === uId)) ||
+        (gEmail && String(b.guestEmail || '').toLowerCase() === gEmail)
+      );
+    } else if (role === 'customer') {
+      return res.json([]);
+    }
+
+    if (hotelId) {
+      localBookings = localBookings.filter(b => String(b.hotelId) === String(hotelId));
+    }
+
+    if (status) {
+      localBookings = localBookings.filter(b => String(b.status || '').toLowerCase() === status.toLowerCase());
+    }
+
+    if (queryLimit > 0) {
+      localBookings = localBookings.slice((queryPage - 1) * queryLimit, queryPage * queryLimit);
+    }
+    return res.json(localBookings);
   }
 
-  const { userId } = req.query;
-  if (userId) {
-    return res.json(bookings.filter(b => b.userId === userId || b.guestEmail === userId));
-  }
   res.json(bookings);
 });
 

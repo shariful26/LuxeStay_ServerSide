@@ -6,25 +6,50 @@ import { connectDatabase } from '../config/db.js';
 
 const router = express.Router();
 
-// GET all rooms
+// GET all rooms (with hotelId filtering, pagination, and projection)
 router.get('/', async (req, res) => {
+  res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=600');
+
   await connectDatabase();
+  const { hotelId, status, limit, page } = req.query;
+
+  const mongoFilter = {};
+  if (hotelId) {
+    mongoFilter.hotelId = String(hotelId);
+  }
+  if (status) {
+    mongoFilter.status = status;
+  }
+
+  const queryLimit = limit ? Math.min(Math.max(Number(limit) || 0, 1), 100) : 0;
+  const queryPage = Math.max(Number(page) || 1, 1);
+  const projection = 'id hotelId name slug type price size capacity bedType view images amenities inclusions available status housekeepingStatus createdAt';
+
   let rooms = [];
   try {
     if (mongoose.connection.readyState === 1) {
-      rooms = await Room.find({}).lean();
+      let q = Room.find(mongoFilter).select(projection).sort({ createdAt: -1 });
+      if (queryLimit > 0) {
+        q = q.skip((queryPage - 1) * queryLimit).limit(queryLimit);
+      }
+      rooms = await q.lean();
     }
   } catch (err) {
     // safe fallback
   }
 
   if (!rooms || rooms.length === 0) {
-    rooms = readData('rooms.json');
-  }
-
-  const { hotelId, destination } = req.query;
-  if (hotelId) {
-    rooms = rooms.filter(r => String(r.hotelId) === String(hotelId));
+    let localRooms = readData('rooms.json') || [];
+    if (hotelId) {
+      localRooms = localRooms.filter(r => String(r.hotelId) === String(hotelId));
+    }
+    if (status) {
+      localRooms = localRooms.filter(r => String(r.status || '') === status);
+    }
+    if (queryLimit > 0) {
+      localRooms = localRooms.slice((queryPage - 1) * queryLimit, queryPage * queryLimit);
+    }
+    return res.json(localRooms);
   }
 
   res.json(rooms);

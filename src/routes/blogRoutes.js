@@ -8,6 +8,7 @@ const router = express.Router();
 
 // GET all travel articles
 router.get('/', async (req, res) => {
+  res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=600');
   await connectDatabase();
   let blogs = [];
   try {

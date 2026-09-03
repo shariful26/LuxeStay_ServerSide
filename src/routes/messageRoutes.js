@@ -16,33 +16,79 @@ const getMessagesStore = () => {
   return inMemoryMessages;
 };
 
-// GET all messages
+// GET messages (filtered by authenticated user/role with limit & projection)
 router.get('/', async (req, res) => {
+  res.setHeader('Cache-Control', 'private, no-cache, no-store, must-revalidate');
+
   await connectDatabase();
+  const { userId, role, limit } = req.query;
+  const maxLimit = Math.min(Math.max(Number(limit) || 50, 1), 100);
+
+  let query = {};
+  if (userId) {
+    const cleanId = String(userId).trim();
+    if (role === 'manager') {
+      query = {
+        $or: [
+          { senderId: cleanId },
+          { recipientId: cleanId },
+          { recipientId: 'partner1' },
+          { recipientId: 'manager' },
+          { recipientRole: 'manager' }
+        ]
+      };
+    } else if (role === 'customer') {
+      query = {
+        $or: [
+          { senderId: cleanId },
+          { recipientId: cleanId }
+        ]
+      };
+    } else if (role !== 'admin') {
+      query = {
+        $or: [
+          { senderId: cleanId },
+          { recipientId: cleanId }
+        ]
+      };
+    }
+  }
+
   let dbMessages = [];
   try {
     if (mongoose.connection.readyState === 1) {
-      dbMessages = await Message.find({}).sort({ createdAt: 1 }).lean();
+      dbMessages = await Message.find(query)
+        .select('id senderId senderName senderRole senderAvatar recipientId recipientName recipientRole text time read createdAt')
+        .sort({ createdAt: -1 })
+        .limit(maxLimit)
+        .lean();
+
+      // Return in chronological order
+      dbMessages = dbMessages.reverse();
     }
   } catch (err) {
     // safe fallback
   }
 
-  const localStore = getMessagesStore();
-
   if (dbMessages && dbMessages.length > 0) {
-    // Merge any newer in-memory messages with DB messages
-    const dbMap = new Map(dbMessages.map(m => [m.id, m]));
-    localStore.forEach(m => {
-      if (!dbMap.has(m.id)) {
-        dbMessages.push(m);
-      }
-    });
-    inMemoryMessages = dbMessages;
     return res.json(dbMessages);
   }
 
-  res.json(localStore);
+  // Fallback to local store with filtering
+  const localStore = getMessagesStore();
+  let filteredLocal = localStore;
+  if (userId) {
+    const cleanId = String(userId).trim();
+    filteredLocal = localStore.filter(m => {
+      if (role === 'manager') {
+        return m.senderId === cleanId || m.recipientId === cleanId || m.recipientId === 'partner1' || m.recipientId === 'manager' || m.recipientRole === 'manager';
+      }
+      return m.senderId === cleanId || m.recipientId === cleanId;
+    });
+  }
+
+  const limitedLocal = filteredLocal.slice(-maxLimit);
+  res.json(limitedLocal);
 });
 
 // POST send new message

@@ -8,6 +8,7 @@ const router = express.Router();
 
 // GET all destinations
 router.get('/', async (req, res) => {
+  res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=600');
   await connectDatabase();
   let destinations = [];
   try {

@@ -6,30 +6,61 @@ import { connectDatabase } from '../config/db.js';
 
 const router = express.Router();
 
-// GET reviews
+// GET reviews (with hotelId filtering, pagination, and projection)
 router.get('/', async (req, res) => {
+  const { hotelId, role, scope, limit, page } = req.query;
+
+  if (role !== 'admin' && role !== 'manager' && scope !== 'all') {
+    res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=600');
+  } else {
+    res.setHeader('Cache-Control', 'private, no-cache, no-store');
+  }
+
   await connectDatabase();
+
+  const mongoFilter = {};
+  if (hotelId) {
+    mongoFilter.hotelId = String(hotelId);
+  }
+
+  if (role !== 'admin' && role !== 'manager' && scope !== 'all') {
+    mongoFilter.visibility = { $nin: ['only_me', 'private'] };
+    mongoFilter.status = { $ne: 'rejected' };
+  }
+
+  const queryLimit = limit ? Math.min(Math.max(Number(limit) || 0, 1), 100) : 50;
+  const queryPage = Math.max(Number(page) || 1, 1);
+  const projection = 'id hotelId hotelName guestName guestAvatar guestCountry rating categories title comment date verifiedStay helpfulCount partnerReply status visibility createdAt';
+
   let reviews = [];
   try {
     if (mongoose.connection.readyState === 1) {
-      reviews = await Review.find({}).sort({ createdAt: -1 }).lean();
+      let q = Review.find(mongoFilter)
+        .select(projection)
+        .sort({ createdAt: -1 });
+
+      if (queryLimit > 0) {
+        q = q.skip((queryPage - 1) * queryLimit).limit(queryLimit);
+      }
+      reviews = await q.lean();
     }
   } catch (err) {}
 
   if (!reviews || reviews.length === 0) {
-    reviews = readData('reviews.json') || [];
-  }
+    let localReviews = readData('reviews.json') || [];
 
-  const { hotelId, role, scope } = req.query;
+    if (hotelId) {
+      localReviews = localReviews.filter(r => String(r.hotelId) === String(hotelId));
+    }
 
-  // Filter by hotelId if specified
-  if (hotelId) {
-    reviews = reviews.filter(r => String(r.hotelId) === String(hotelId));
-  }
+    if (role !== 'admin' && role !== 'manager' && scope !== 'all') {
+      localReviews = localReviews.filter(r => r.visibility !== 'only_me' && r.visibility !== 'private' && r.status !== 'rejected');
+    }
 
-  // If public guest view (not admin or manager), hide 'only_me' / 'private' / 'rejected' reviews
-  if (role !== 'admin' && role !== 'manager' && scope !== 'all') {
-    reviews = reviews.filter(r => r.visibility !== 'only_me' && r.visibility !== 'private' && r.status !== 'rejected');
+    if (queryLimit > 0) {
+      localReviews = localReviews.slice((queryPage - 1) * queryLimit, queryPage * queryLimit);
+    }
+    return res.json(localReviews);
   }
 
   res.json(reviews);

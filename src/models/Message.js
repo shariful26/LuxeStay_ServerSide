@@ -15,4 +15,9 @@ const messageSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now }
 }, { timestamps: true });
 
+messageSchema.index({ senderId: 1, recipientId: 1, createdAt: -1 });
+messageSchema.index({ recipientId: 1, read: 1 });
+messageSchema.index({ createdAt: -1 });
+
 export const Message = mongoose.models.Message || mongoose.model('Message', messageSchema);
+

@@ -19,5 +19,9 @@ const RoomSchema = new mongoose.Schema({
   status: String
 }, { timestamps: true, strict: false });
 
+RoomSchema.index({ id: 1 }, { unique: true, sparse: true });
+RoomSchema.index({ hotelId: 1, status: 1 });
+RoomSchema.index({ slug: 1 });
+
 export const Room = mongoose.models.Room || mongoose.model('Room', RoomSchema);
 export default Room;

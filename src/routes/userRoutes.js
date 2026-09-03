@@ -7,29 +7,64 @@ import { connectDatabase } from '../config/db.js';
 
 const router = express.Router();
 
-// GET all users (Live MongoDB with JSON fallback)
+// GET all users (Live MongoDB with projection, pagination, and -password)
 router.get('/', async (req, res) => {
+  res.setHeader('Cache-Control', 'private, no-cache, no-store, must-revalidate');
+
   await connectDatabase();
+  const { role, limit, page, search } = req.query;
+
+  const mongoFilter = {};
+  if (role) mongoFilter.role = role;
+  if (search && String(search).trim().length > 0) {
+    const q = String(search).trim();
+    mongoFilter.$or = [
+      { name: { $regex: q, $options: 'i' } },
+      { email: { $regex: q, $options: 'i' } }
+    ];
+  }
+
+  const queryLimit = limit ? Math.min(Math.max(Number(limit) || 0, 1), 100) : 50;
+  const queryPage = Math.max(Number(page) || 1, 1);
+  const projection = 'id name email role avatar phone country memberSince address city state zip status';
+
   let users = [];
   try {
     if (mongoose.connection.readyState === 1) {
-      users = await User.find({}).lean();
+      let q = User.find(mongoFilter)
+        .select(projection)
+        .sort({ createdAt: -1 });
+
+      if (queryLimit > 0) {
+        q = q.skip((queryPage - 1) * queryLimit).limit(queryLimit);
+      }
+      users = await q.lean();
     }
   } catch (err) {
     // safe fallback
   }
 
   if (!users || users.length === 0) {
-    users = readData('users.json');
+    let localUsers = readData('users.json') || [];
+    if (role) localUsers = localUsers.filter(u => u.role === role);
+    if (search) {
+      const q = String(search).toLowerCase();
+      localUsers = localUsers.filter(u => (u.name && u.name.toLowerCase().includes(q)) || (u.email && u.email.toLowerCase().includes(q)));
+    }
+
+    // Strip password
+    const safeUsers = localUsers.map(u => {
+      const { password, ...safeUser } = u;
+      return safeUser;
+    });
+
+    if (queryLimit > 0) {
+      return res.json(safeUsers.slice((queryPage - 1) * queryLimit, queryPage * queryLimit));
+    }
+    return res.json(safeUsers);
   }
 
-  // Remove sensitive password hash from list
-  const safeUsers = users.map(u => {
-    const { password, ...safeUser } = u;
-    return safeUser;
-  });
-
-  res.json(safeUsers);
+  res.json(users);
 });
 
 // GET single user by ID or Role alias ('manager', 'customer', etc.)
@@ -72,7 +107,7 @@ router.get('/:id', async (req, res) => {
           { email: requestedId.toLowerCase() },
           { _id: mongoose.isValidObjectId(requestedId) ? requestedId : null }
         ]
-      }).lean();
+      }).select('-password').lean();
     } catch (e) {}
   }
 
