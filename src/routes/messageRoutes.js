@@ -106,30 +106,60 @@ router.post('/', async (req, res) => {
   res.status(201).json(newMessage);
 });
 
-// PUT mark messages from a user as read
+// PUT mark messages as read
 router.put('/read', async (req, res) => {
   await connectDatabase();
-  const { senderId, recipientId } = req.body;
-  if (!senderId || !recipientId) {
-    return res.status(400).json({ error: 'senderId and recipientId are required' });
+  const { senderId, recipientId, role } = req.body;
+  if (!senderId) {
+    return res.status(400).json({ error: 'senderId is required' });
+  }
+
+  const sId = String(senderId).trim();
+  const rId = recipientId ? String(recipientId).trim() : '';
+
+  const orConditions = [
+    { senderId: sId },
+    { senderRole: sId }
+  ];
+
+  if (sId === 'manager' || role === 'manager') {
+    orConditions.push({ senderRole: 'customer' });
+  }
+
+  const filter = {
+    $or: orConditions,
+    read: false
+  };
+
+  if (rId) {
+    const recipientOr = [
+      { recipientId: rId },
+      { recipientRole: rId }
+    ];
+    if (role === 'manager' || rId === 'manager') {
+      recipientOr.push({ recipientRole: 'manager' }, { recipientId: 'manager' }, { recipientId: 'partner1' });
+    }
+    if (role === 'admin' || rId === 'admin') {
+      recipientOr.push({ recipientRole: 'admin' }, { recipientId: 'admin' });
+    }
+    if (role === 'customer') {
+      recipientOr.push({ recipientRole: 'customer' });
+    }
+    filter.$and = [{ $or: recipientOr }];
   }
 
   try {
     if (mongoose.connection.readyState === 1) {
-      await Message.updateMany(
-        { senderId: String(senderId), recipientId: String(recipientId), read: false },
-        { $set: { read: true } }
-      );
+      await Message.updateMany(filter, { $set: { read: true } });
     }
-  } catch (err) {
-    // safe fallback
-  }
+  } catch (err) {}
 
   const store = getMessagesStore();
   let updated = false;
 
   store.forEach(msg => {
-    if (String(msg.senderId) === String(senderId) && String(msg.recipientId) === String(recipientId) && !msg.read) {
+    const matchesSender = String(msg.senderId) === sId || msg.senderRole === sId;
+    if (matchesSender && !msg.read) {
       msg.read = true;
       updated = true;
     }
@@ -140,6 +170,106 @@ router.put('/read', async (req, res) => {
   }
 
   res.json({ success: true, message: 'Messages marked as read' });
+});
+
+// PUT edit individual message
+router.put('/:id', async (req, res) => {
+  await connectDatabase();
+  const { id } = req.params;
+  const { text } = req.body;
+
+  if (!text || !String(text).trim()) {
+    return res.status(400).json({ error: 'Message text is required' });
+  }
+
+  const cleanText = String(text).trim();
+
+  try {
+    if (mongoose.connection.readyState === 1) {
+      await Message.findOneAndUpdate(
+        { $or: [{ id: String(id) }, { _id: mongoose.isValidObjectId(id) ? id : null }] },
+        { $set: { text: cleanText, edited: true } }
+      );
+    }
+  } catch (err) {}
+
+  const store = getMessagesStore();
+  const target = store.find(m => String(m.id) === String(id));
+  if (target) {
+    target.text = cleanText;
+    target.edited = true;
+    writeData('messages.json', store);
+    return res.json(target);
+  }
+
+  res.json({ id, text: cleanText, edited: true, success: true });
+});
+
+// DELETE individual message
+router.delete('/:id', async (req, res) => {
+  await connectDatabase();
+  const { id } = req.params;
+
+  try {
+    if (mongoose.connection.readyState === 1) {
+      await Message.deleteOne({
+        $or: [{ id: String(id) }, { _id: mongoose.isValidObjectId(id) ? id : null }]
+      });
+    }
+  } catch (err) {}
+
+  const store = getMessagesStore();
+  const idx = store.findIndex(m => String(m.id) === String(id));
+  if (idx !== -1) {
+    store.splice(idx, 1);
+    writeData('messages.json', store);
+  }
+
+  res.json({ success: true, message: 'Message deleted', id });
+});
+
+// DELETE all messages in conversation (3-dot Clear Chat)
+router.post('/clear-conversation', async (req, res) => {
+  await connectDatabase();
+  const { user1, user2 } = req.body;
+  if (!user1 || !user2) {
+    return res.status(400).json({ error: 'user1 and user2 are required' });
+  }
+
+  const u1 = String(user1).trim();
+  const u2 = String(user2).trim();
+
+  const conversationFilter = {
+    $or: [
+      { senderId: u1, recipientId: u2 },
+      { senderId: u2, recipientId: u1 },
+      { senderId: u1, recipientRole: u2 },
+      { senderId: u2, recipientRole: u1 },
+      { senderRole: u1, recipientId: u2 },
+      { senderRole: u2, recipientId: u1 },
+      { senderRole: u1, recipientRole: u2 },
+      { senderRole: u2, recipientRole: u1 }
+    ]
+  };
+
+  try {
+    if (mongoose.connection.readyState === 1) {
+      await Message.deleteMany(conversationFilter);
+    }
+  } catch (err) {}
+
+  const store = getMessagesStore();
+  const remaining = store.filter(m => {
+    const match = 
+      (String(m.senderId) === u1 && String(m.recipientId) === u2) ||
+      (String(m.senderId) === u2 && String(m.recipientId) === u1) ||
+      (String(m.senderId) === u1 && m.recipientRole === u2) ||
+      (String(m.senderId) === u2 && m.recipientRole === u1);
+    return !match;
+  });
+
+  writeData('messages.json', remaining);
+  res.json({ success: true, message: 'All messages in conversation deleted' });
 });
 
 export default router;

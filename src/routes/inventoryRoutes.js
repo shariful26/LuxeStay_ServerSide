@@ -68,4 +68,18 @@ router.put('/:id', async (req, res) => {
   res.json(inventory[index]);
 });
 
+// DELETE inventory item
+router.delete('/:id', async (req, res) => {
+  try {
+    if (mongoose.connection.readyState === 1) {
+      await Inventory.deleteOne({ id: req.params.id });
+    }
+  } catch (err) {}
+
+  let inventory = readData('inventory.json');
+  inventory = inventory.filter(item => item.id !== req.params.id);
+  writeData('inventory.json', inventory);
+  res.json({ success: true, message: 'Item deleted' });
+});
+
 export default router;
