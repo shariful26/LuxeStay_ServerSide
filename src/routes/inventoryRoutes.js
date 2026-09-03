@@ -6,32 +6,87 @@ import { connectDatabase } from '../config/db.js';
 
 const router = express.Router();
 
-// GET inventory items
+const normalizeItem = (item) => {
+  if (!item) return null;
+  const rawObj = typeof item.toObject === 'function' ? item.toObject() : item;
+
+  const stockVal = Number(
+    rawObj.stock !== undefined ? rawObj.stock : 
+    (rawObj.quantity !== undefined ? rawObj.quantity : 120)
+  );
+
+  const reorderVal = Number(
+    rawObj.reorderLimit !== undefined ? rawObj.reorderLimit : 
+    (rawObj.minThreshold !== undefined ? rawObj.minThreshold : 50)
+  );
+
+  const nameVal = rawObj.name || rawObj.itemName || (rawObj.category ? `${rawObj.category} Supplies` : 'Inventory Asset');
+  const safeStock = isNaN(stockVal) ? 100 : stockVal;
+  const safeReorder = isNaN(reorderVal) ? 50 : reorderVal;
+
+  const calculatedAvail = safeStock <= 0 ? 'Out of Stock' : safeStock <= safeReorder ? 'Low' : 'Available';
+
+  return {
+    ...rawObj,
+    id: String(rawObj.id || rawObj._id),
+    name: nameVal,
+    itemName: nameVal,
+    category: rawObj.category || 'General',
+    stock: safeStock,
+    quantity: safeStock,
+    reorderLimit: safeReorder,
+    minThreshold: safeReorder,
+    availability: calculatedAvail,
+    status: calculatedAvail === 'Out of Stock' ? 'Out of Stock' : calculatedAvail === 'Low' ? 'Low Stock' : 'In Stock',
+    unit: rawObj.unit || 'Units'
+  };
+};
+
+// GET inventory items (Always fresh from MongoDB Atlas, no-cache)
 router.get('/', async (req, res) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+
   await connectDatabase();
   let inventory = [];
+
   try {
     if (mongoose.connection.readyState === 1) {
-      inventory = await Inventory.find({}).lean();
+      inventory = await Inventory.find({}).sort({ updatedAt: -1, createdAt: -1 }).lean();
     }
   } catch (err) {}
 
   if (!inventory || inventory.length === 0) {
-    inventory = readData('inventory.json');
+    inventory = readData('inventory.json') || [];
   }
 
-  res.json(inventory);
+  const normalized = inventory.map(normalizeItem);
+  res.json(normalized);
 });
 
 // POST add inventory item
 router.post('/', async (req, res) => {
+  await connectDatabase();
+
+  const stockVal = Number(req.body.stock !== undefined ? req.body.stock : req.body.quantity) || 100;
+  const reorderVal = Number(req.body.reorderLimit !== undefined ? req.body.reorderLimit : req.body.minThreshold) || 50;
+  const nameVal = req.body.name || req.body.itemName || 'New Supply Item';
+  const availVal = stockVal <= 0 ? 'Out of Stock' : stockVal <= reorderVal ? 'Low' : 'Available';
+
   const newItem = {
     id: `inv_${Date.now()}`,
-    name: req.body.name,
-    category: req.body.category,
-    availability: req.body.availability || 'Available',
-    stock: Number(req.body.stock) || 0,
-    reorderLimit: Number(req.body.reorderLimit) || 0
+    name: nameVal,
+    itemName: nameVal,
+    category: req.body.category || 'General',
+    stock: stockVal,
+    quantity: stockVal,
+    reorderLimit: reorderVal,
+    minThreshold: reorderVal,
+    availability: availVal,
+    status: availVal === 'Available' ? 'In Stock' : availVal,
+    unit: req.body.unit || 'Units',
+    updatedAt: new Date().toISOString()
   };
 
   try {
@@ -41,43 +96,85 @@ router.post('/', async (req, res) => {
     }
   } catch (err) {}
 
-  const inventory = readData('inventory.json');
-  inventory.push(newItem);
+  const inventory = readData('inventory.json') || [];
+  inventory.unshift(newItem);
   writeData('inventory.json', inventory);
 
-  res.status(201).json(newItem);
+  res.status(201).json(normalizeItem(newItem));
 });
 
-// PUT update inventory item
+// PUT update inventory item (Persists stock, quantity, reorderLimit, and status to MongoDB Atlas)
 router.put('/:id', async (req, res) => {
-  try {
-    if (mongoose.connection.readyState === 1) {
-      await Inventory.findOneAndUpdate({ id: req.params.id }, { $set: req.body });
-    }
-  } catch (err) {}
+  await connectDatabase();
+  const { id } = req.params;
 
-  const inventory = readData('inventory.json');
-  const index = inventory.findIndex(item => item.id === req.params.id);
-  if (index === -1) return res.status(404).json({ error: 'Item not found' });
+  const stockVal = req.body.stock !== undefined ? Number(req.body.stock) : 
+                   (req.body.quantity !== undefined ? Number(req.body.quantity) : undefined);
 
-  inventory[index] = {
-    ...inventory[index],
-    ...req.body
-  };
-  writeData('inventory.json', inventory);
-  res.json(inventory[index]);
+  const reorderVal = req.body.reorderLimit !== undefined ? Number(req.body.reorderLimit) : 
+                     (req.body.minThreshold !== undefined ? Number(req.body.minThreshold) : undefined);
+
+  const nameVal = req.body.name || req.body.itemName;
+
+  const updateFields = { ...req.body, updatedAt: new Date().toISOString() };
+
+  if (stockVal !== undefined) {
+    updateFields.stock = stockVal;
+    updateFields.quantity = stockVal;
+    const thresh = reorderVal !== undefined ? reorderVal : 50;
+    updateFields.availability = stockVal <= 0 ? 'Out of Stock' : stockVal <= thresh ? 'Low' : 'Available';
+    updateFields.status = updateFields.availability === 'Available' ? 'In Stock' : updateFields.availability;
+  }
+
+  if (reorderVal !== undefined) {
+    updateFields.reorderLimit = reorderVal;
+    updateFields.minThreshold = reorderVal;
+  }
+
+  if (nameVal) {
+    updateFields.name = nameVal;
+    updateFields.itemName = nameVal;
+  }
+
+  let mongoUpdated = null;
+  if (mongoose.connection.readyState === 1) {
+    try {
+      mongoUpdated = await Inventory.findOneAndUpdate(
+        { $or: [{ id }, { _id: mongoose.isValidObjectId(id) ? id : null }] },
+        { $set: updateFields },
+        { new: true }
+      ).lean();
+    } catch (err) {}
+  }
+
+  const inventory = readData('inventory.json') || [];
+  const index = inventory.findIndex(item => item.id === id);
+  if (index !== -1) {
+    inventory[index] = { ...inventory[index], ...updateFields };
+    writeData('inventory.json', inventory);
+    return res.json(normalizeItem(mongoUpdated || inventory[index]));
+  }
+
+  if (mongoUpdated) {
+    return res.json(normalizeItem(mongoUpdated));
+  }
+
+  res.json(normalizeItem({ id, ...updateFields }));
 });
 
 // DELETE inventory item
 router.delete('/:id', async (req, res) => {
+  await connectDatabase();
+  const { id } = req.params;
+
   try {
     if (mongoose.connection.readyState === 1) {
-      await Inventory.deleteOne({ id: req.params.id });
+      await Inventory.deleteOne({ $or: [{ id }, { _id: mongoose.isValidObjectId(id) ? id : null }] });
     }
   } catch (err) {}
 
-  let inventory = readData('inventory.json');
-  inventory = inventory.filter(item => item.id !== req.params.id);
+  let inventory = readData('inventory.json') || [];
+  inventory = inventory.filter(item => item.id !== id);
   writeData('inventory.json', inventory);
   res.json({ success: true, message: 'Item deleted' });
 });

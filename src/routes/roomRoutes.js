@@ -8,7 +8,9 @@ const router = express.Router();
 
 // GET all rooms (with hotelId filtering, pagination, and projection)
 router.get('/', async (req, res) => {
-  res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=600');
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
 
   await connectDatabase();
   const { hotelId, status, limit, page } = req.query;
@@ -23,7 +25,7 @@ router.get('/', async (req, res) => {
 
   const queryLimit = limit ? Math.min(Math.max(Number(limit) || 0, 1), 100) : 0;
   const queryPage = Math.max(Number(page) || 1, 1);
-  const projection = 'id hotelId name slug type price size capacity bedType view images amenities inclusions available status housekeepingStatus createdAt';
+  const projection = 'id hotelId name slug type price size capacity bedType view images amenities inclusions available status housekeepingStatus housekeepingPriority housekeepingNotes createdAt';
 
   let rooms = [];
   try {
@@ -152,6 +154,7 @@ router.put('/:id', async (req, res) => {
 
 // PUT update housekeeping status & priority
 router.put('/:id/housekeeping', async (req, res) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   await connectDatabase();
   const { id } = req.params;
   const { housekeepingStatus, housekeepingPriority, housekeepingNotes } = req.body;
@@ -160,12 +163,12 @@ router.put('/:id/housekeeping', async (req, res) => {
   if (mongoose.connection.readyState === 1) {
     try {
       mongoUpdated = await Room.findOneAndUpdate(
-        { $or: [{ id }, { _id: mongoose.isValidObjectId(id) ? id : null }] },
+        { $or: [{ id: String(id) }, { _id: mongoose.isValidObjectId(id) ? id : null }, { slug: id }] },
         { 
           $set: { 
             housekeepingStatus, 
-            housekeepingPriority, 
-            housekeepingNotes,
+            housekeepingPriority: housekeepingPriority || 'Medium', 
+            housekeepingNotes: housekeepingNotes !== undefined ? housekeepingNotes : '',
             updatedAt: new Date().toISOString()
           } 
         },
@@ -176,14 +179,14 @@ router.put('/:id/housekeeping', async (req, res) => {
     }
   }
 
-  let rooms = readData('rooms.json');
-  const index = rooms.findIndex(r => r.id === id);
+  let rooms = readData('rooms.json') || [];
+  const index = rooms.findIndex(r => r.id === id || r.slug === id);
   if (index !== -1) {
     rooms[index] = { 
       ...rooms[index], 
       housekeepingStatus: housekeepingStatus || rooms[index].housekeepingStatus,
-      housekeepingPriority: housekeepingPriority || rooms[index].housekeepingPriority,
-      housekeepingNotes: housekeepingNotes !== undefined ? housekeepingNotes : rooms[index].housekeepingNotes,
+      housekeepingPriority: housekeepingPriority || rooms[index].housekeepingPriority || 'Medium',
+      housekeepingNotes: housekeepingNotes !== undefined ? housekeepingNotes : (rooms[index].housekeepingNotes || ''),
       updatedAt: new Date().toISOString()
     };
     writeData('rooms.json', rooms);
@@ -191,7 +194,7 @@ router.put('/:id/housekeeping', async (req, res) => {
   }
 
   if (mongoUpdated) return res.json(mongoUpdated);
-  res.json({ id, housekeepingStatus, housekeepingPriority, housekeepingNotes });
+  res.json({ id, housekeepingStatus, housekeepingPriority: housekeepingPriority || 'Medium', housekeepingNotes: housekeepingNotes || '' });
 });
 
 // DELETE room
