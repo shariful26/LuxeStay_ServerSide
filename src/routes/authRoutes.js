@@ -324,4 +324,61 @@ router.post('/reset-password', async (req, res) => {
   }
 });
 
+// --- 6. VERIFY & REFRESH PERSISTENT SESSION ---
+router.get('/me', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    const queryEmail = req.query.email;
+    const queryId = req.query.id;
+
+    await connectDatabase();
+    let user = null;
+
+    if (mongoose.connection.readyState === 1) {
+      if (queryEmail) {
+        user = await User.findOne({ email: String(queryEmail).trim().toLowerCase() }).select('-password').lean();
+      } else if (queryId) {
+        user = await User.findOne({ 
+          $or: [
+            { id: queryId },
+            { _id: mongoose.isValidObjectId(queryId) ? queryId : null }
+          ]
+        }).select('-password').lean();
+      } else if (authHeader && authHeader.startsWith('Bearer jwt-token-')) {
+        const extractedId = authHeader.replace('Bearer jwt-token-', '').trim();
+        user = await User.findOne({
+          $or: [
+            { id: extractedId },
+            { _id: mongoose.isValidObjectId(extractedId) ? extractedId : null }
+          ]
+        }).select('-password').lean();
+      }
+    }
+
+    if (!user) {
+      return res.status(404).json({ error: 'Session user not found' });
+    }
+
+    const cleanAvatar = sanitizeAvatar(user.avatar, user.role, user.name);
+    return res.json({
+      success: true,
+      user: {
+        id: user.id || user._id?.toString(),
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        avatar: cleanAvatar,
+        phone: user.phone || '',
+        country: user.country || '',
+        address: user.address || '',
+        city: user.city || '',
+        state: user.state || '',
+        zip: user.zip || ''
+      }
+    });
+  } catch (err) {
+    return res.status(500).json({ error: 'Failed to verify session' });
+  }
+});
+
 export default router;
