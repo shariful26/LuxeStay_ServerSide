@@ -55,16 +55,6 @@ router.get('/', async (req, res) => {
   let bookings = [];
   try {
     if (mongoose.connection.readyState === 1) {
-      // Auto-purge any remnant mock Alice Johnson bookings from MongoDB
-      await Booking.deleteMany({
-        $or: [
-          { guestName: /Alice Johnson/i },
-          { guestEmail: 'customer@luxestay.com' }
-        ]
-      });
-
-      mongoFilter.guestName = { $not: /Alice Johnson/i };
-
       let q = Booking.find(mongoFilter)
         .select(projection)
         .sort({ createdAt: -1 });

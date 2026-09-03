@@ -22,10 +22,7 @@ router.get('/', async (req, res) => {
   await connectDatabase();
   const { role, limit, page, search } = req.query;
 
-  const mongoFilter = {
-    name: { $ne: 'Alice Johnson' },
-    id: { $ne: 'u_customer_demo' }
-  };
+  const mongoFilter = {};
   if (role) mongoFilter.role = role;
   if (search && String(search).trim().length > 0) {
     const q = String(search).trim();
@@ -42,14 +39,6 @@ router.get('/', async (req, res) => {
   let users = [];
   try {
     if (mongoose.connection.readyState === 1) {
-      // Auto-purge any remnant mock Alice Johnson records from MongoDB
-      await User.deleteMany({
-        $or: [
-          { id: 'u_customer_demo' },
-          { name: 'Alice Johnson' }
-        ]
-      });
-
       let q = User.find(mongoFilter)
         .select(projection)
         .sort({ createdAt: -1 });
@@ -86,7 +75,7 @@ router.get('/:id', async (req, res) => {
       } else if (requestedId === 'admin') {
         user = await User.findOne({ role: 'admin' }).select('-password').lean();
       } else if (requestedId === 'customer') {
-        user = await User.findOne({ role: 'customer', name: { $ne: 'Alice Johnson' } }).select('-password').lean();
+        user = await User.findOne({ role: 'customer' }).select('-password').lean();
       } else {
         user = await User.findOne({
           $or: [

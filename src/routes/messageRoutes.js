@@ -57,21 +57,7 @@ router.get('/', async (req, res) => {
   let dbMessages = [];
   try {
     if (mongoose.connection.readyState === 1) {
-      // Auto-purge remnant mock Alice Johnson messages
-      await Message.deleteMany({
-        $or: [
-          { senderName: /Alice Johnson/i },
-          { recipientName: /Alice Johnson/i },
-          { senderId: 'alice' },
-          { recipientId: 'alice' }
-        ]
-      });
-
-      dbMessages = await Message.find({
-        ...query,
-        senderName: { $not: /Alice Johnson/i },
-        recipientName: { $not: /Alice Johnson/i }
-      })
+      dbMessages = await Message.find(query)
         .select('id senderId senderName senderRole senderAvatar recipientId recipientName recipientRole text time read createdAt')
         .sort({ createdAt: -1 })
         .limit(maxLimit)
