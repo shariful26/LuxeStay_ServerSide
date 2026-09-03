@@ -56,16 +56,14 @@ router.get('/', async (req, res) => {
 
   let dbMessages = [];
   try {
-    if (mongoose.connection.readyState === 1) {
-      dbMessages = await Message.find(query)
-        .select('id senderId senderName senderRole senderAvatar recipientId recipientName recipientRole text time read createdAt')
-        .sort({ createdAt: -1 })
-        .limit(maxLimit)
-        .lean();
+    dbMessages = await Message.find(query)
+      .select('id senderId senderName senderRole senderAvatar recipientId recipientName recipientRole text time read createdAt')
+      .sort({ createdAt: -1 })
+      .limit(maxLimit)
+      .lean();
 
-      // Return in chronological order
-      dbMessages = dbMessages.reverse();
-    }
+    // Return in chronological order
+    dbMessages = dbMessages.reverse();
   } catch (err) {
     // safe fallback
   }
@@ -96,12 +94,10 @@ router.post('/', async (req, res) => {
   const store = getMessagesStore();
   store.push(newMessage);
 
-  // Background persistence to MongoDB Atlas
+  // Direct persistence to MongoDB Atlas
   try {
-    if (mongoose.connection.readyState === 1) {
-      const mongoMsg = new Message(newMessage);
-      await mongoMsg.save();
-    }
+    const mongoMsg = new Message(newMessage);
+    await mongoMsg.save();
   } catch (err) {
     // safe fallback
   }

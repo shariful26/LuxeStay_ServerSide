@@ -301,28 +301,26 @@ router.get('/me', async (req, res) => {
     await connectDatabase();
     let user = null;
 
-    if (mongoose.connection.readyState === 1) {
-      if (queryEmail) {
-        user = await User.findOne({ 
-          email: String(queryEmail).trim().toLowerCase(),
-          id: { $ne: 'u_customer_demo' }
-        }).select('-password').lean();
-      } else if (queryId) {
-        user = await User.findOne({ 
-          $or: [
-            { id: queryId },
-            { _id: mongoose.isValidObjectId(queryId) ? queryId : null }
-          ]
-        }).select('-password').lean();
-      } else if (authHeader && authHeader.startsWith('Bearer jwt-token-')) {
-        const extractedId = authHeader.replace('Bearer jwt-token-', '').trim();
-        user = await User.findOne({
-          $or: [
-            { id: extractedId },
-            { _id: mongoose.isValidObjectId(extractedId) ? extractedId : null }
-          ]
-        }).select('-password').lean();
-      }
+    if (queryEmail) {
+      user = await User.findOne({ 
+        email: String(queryEmail).trim().toLowerCase(),
+        id: { $ne: 'u_customer_demo' }
+      }).select('-password').lean();
+    } else if (queryId) {
+      user = await User.findOne({ 
+        $or: [
+          { id: queryId },
+          { _id: mongoose.isValidObjectId(queryId) ? queryId : null }
+        ]
+      }).select('-password').lean();
+    } else if (authHeader && authHeader.startsWith('Bearer jwt-token-')) {
+      const extractedId = authHeader.replace('Bearer jwt-token-', '').trim();
+      user = await User.findOne({
+        $or: [
+          { id: extractedId },
+          { _id: mongoose.isValidObjectId(extractedId) ? extractedId : null }
+        ]
+      }).select('-password').lean();
     }
 
     if (!user) {
