@@ -1,5 +1,6 @@
 import express from 'express';
 import mongoose from 'mongoose';
+import { connectDatabase } from '../config/db.js';
 import { 
   User, 
   Hotel, 
@@ -16,6 +17,7 @@ const router = express.Router();
 
 // GET database health status
 router.get('/db-status', async (req, res) => {
+  await connectDatabase();
   const states = ['Disconnected', 'Connected', 'Connecting', 'Disconnecting'];
   const currentState = states[mongoose.connection.readyState] || 'Unknown';
   
@@ -50,6 +52,7 @@ router.get('/db-status', async (req, res) => {
   res.json({
     status: currentState,
     isAtlasConnected: mongoose.connection.readyState === 1,
+    clusterHost: mongoose.connection.host || 'cluster0.zakm4rq.mongodb.net',
     dbName: mongoose.connection.name || 'hotel_db',
     collectionsSummary
   });
