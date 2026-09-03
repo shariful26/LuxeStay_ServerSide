@@ -11,13 +11,11 @@ const router = express.Router();
 export const resetTokens = new Map();
 
 // In-Memory Fast Lookup Helper - Preserves user avatar (custom URLs, uploads & base64)
-const sanitizeAvatar = (avatar, role = 'customer') => {
-  if (avatar && typeof avatar === 'string' && avatar.trim().length > 0) {
+const sanitizeAvatar = (avatar, role = 'customer', name = 'User') => {
+  if (avatar && typeof avatar === 'string' && avatar.trim().length > 0 && !avatar.includes('photo-1534528741775')) {
     return avatar.trim();
   }
-  if (role === 'admin') return 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=200&q=80';
-  if (role === 'manager') return 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80';
-  return 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80';
+  return `https://ui-avatars.com/api/?name=${encodeURIComponent(name || 'User')}&background=0284c7&color=fff&bold=true`;
 };
 
 
@@ -41,7 +39,7 @@ router.post('/register', async (req, res) => {
 
     // Encrypt password securely (cost factor 6 for sub-10ms response)
     const hashedPassword = await bcrypt.hash(password, 6);
-    const cleanAvatarUrl = sanitizeAvatar(avatar, role);
+    const cleanAvatarUrl = sanitizeAvatar(avatar, role, name.trim());
 
     const newUserPayload = {
       id: `u_${Date.now()}`,
@@ -161,9 +159,8 @@ router.post('/login', async (req, res) => {
     }
 
     const cleanEmail = String(email).trim().toLowerCase();
-    const targetRole = role || 'customer';
 
-    // 1. Connect to database and search MongoDB Atlas first for the real live user!
+    // 1. Connect to MongoDB Atlas and retrieve real user
     await connectDatabase();
     let userObj = null;
     if (mongoose.connection.readyState === 1) {
@@ -172,32 +169,14 @@ router.post('/login', async (req, res) => {
       } catch (findErr) {}
     }
 
-    // 2. Fallback to local JSON if not connected or not found in Atlas
+    // 2. If account not found in MongoDB Atlas, reject immediately (no fake users)
     if (!userObj) {
-      const existingUsers = readData('users.json') || [];
-      userObj = existingUsers.find(u => u && u.email && u.email.toLowerCase() === cleanEmail);
+      return res.status(401).json({ error: 'Account not found in database. Please register first.' });
     }
 
-    // If account not found in MongoDB Atlas
-    if (!userObj) {
-      return res.status(401).json({ error: 'Account does not exist. Please register first.' });
-    }
-
-    // 4. Password Verification
+    // 3. Real Password Verification via Bcrypt
     let isPasswordMatch = false;
-
-    // Fast Demo Bypass for 123456
-    if (password === '123456' && (
-      cleanEmail === 'customer@luxestay.com' ||
-      cleanEmail === 'manager@luxestay.com' ||
-      cleanEmail === 'admin@luxestay.com' ||
-      cleanEmail === 'sharif@gmail.com' ||
-      cleanEmail === 'shariful@gmail.com' ||
-      cleanEmail === 'sharifu@gmail.com' ||
-      cleanEmail === 'sharifulalam@gmail.com'
-    )) {
-      isPasswordMatch = true;
-    } else if (userObj.password) {
+    if (userObj.password) {
       try {
         if (userObj.password.startsWith('$2a$') || userObj.password.startsWith('$2b$')) {
           isPasswordMatch = await bcrypt.compare(password, userObj.password);
@@ -213,39 +192,30 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ error: 'Incorrect password. Please try again.' });
     }
 
-    const finalRole = userObj.role || targetRole;
-    const finalAvatar = sanitizeAvatar(userObj.avatar, finalRole);
+    const finalRole = userObj.role || 'customer';
+    const finalAvatar = sanitizeAvatar(userObj.avatar, finalRole, userObj.name);
 
-    // 5. Background Atlas Sync (non-blocking)
-    if (isDbConnected()) {
-      User.updateOne(
-        { email: cleanEmail },
-        { $setOnInsert: { ...userObj, avatar: finalAvatar } },
-        { upsert: true }
-      ).catch(() => {});
-    }
-
-    // 6. Return Clean Success Response Instantly
+    // 4. Return Real MongoDB User Profile
     return res.json({
       success: true,
       message: 'Login successful',
       user: {
-        id: userObj.id || userObj._id || 'u_user',
+        id: userObj.id || userObj._id?.toString(),
         name: userObj.name || 'User',
         email: userObj.email || cleanEmail,
         role: finalRole,
         avatar: finalAvatar,
-        phone: userObj.phone || '+1 (555) 888-9999',
-        country: userObj.country || 'United States',
+        phone: userObj.phone || '',
+        country: userObj.country || '',
         address: userObj.address || '',
         city: userObj.city || '',
         state: userObj.state || '',
         zip: userObj.zip || ''
       },
-      token: `jwt-token-${userObj.id || userObj._id || 'u_token'}`
+      token: `jwt-token-${userObj.id || userObj._id}`
     });
   } catch (err) {
-    res.status(500).json({ error: 'Server login error' });
+    res.status(500).json({ error: 'Server database login error' });
   }
 });
 

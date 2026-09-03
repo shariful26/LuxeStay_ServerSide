@@ -55,6 +55,16 @@ router.get('/', async (req, res) => {
   let bookings = [];
   try {
     if (mongoose.connection.readyState === 1) {
+      // Auto-purge any remnant mock Alice Johnson bookings from MongoDB
+      await Booking.deleteMany({
+        $or: [
+          { guestName: /Alice Johnson/i },
+          { guestEmail: 'customer@luxestay.com' }
+        ]
+      });
+
+      mongoFilter.guestName = { $not: /Alice Johnson/i };
+
       let q = Booking.find(mongoFilter)
         .select(projection)
         .sort({ createdAt: -1 });
@@ -68,35 +78,8 @@ router.get('/', async (req, res) => {
     // safe fallback
   }
 
-  if (!bookings || bookings.length === 0) {
-    let localBookings = readData('bookings.json') || [];
-
-    if (userId || guestEmail) {
-      const uId = userId ? String(userId).trim().toLowerCase() : '';
-      const gEmail = guestEmail ? String(guestEmail).trim().toLowerCase() : '';
-      localBookings = localBookings.filter(b => 
-        (uId && (String(b.userId || '').toLowerCase() === uId || String(b.guestEmail || '').toLowerCase() === uId)) ||
-        (gEmail && String(b.guestEmail || '').toLowerCase() === gEmail)
-      );
-    } else if (role === 'customer') {
-      return res.json([]);
-    }
-
-    if (hotelId) {
-      localBookings = localBookings.filter(b => String(b.hotelId) === String(hotelId));
-    }
-
-    if (status) {
-      localBookings = localBookings.filter(b => String(b.status || '').toLowerCase() === status.toLowerCase());
-    }
-
-    if (queryLimit > 0) {
-      localBookings = localBookings.slice((queryPage - 1) * queryLimit, queryPage * queryLimit);
-    }
-    return res.json(localBookings);
-  }
-
-  res.json(bookings);
+  // Return pure real MongoDB bookings
+  res.json(bookings || []);
 });
 
 // POST create new booking

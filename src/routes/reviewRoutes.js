@@ -87,8 +87,9 @@ router.post('/', async (req, res) => {
       id: `rev-${Date.now()}`,
       hotelId: hotelId || 'h-1',
       hotelName: hotelName || 'LuxeStay Curated Resort',
-      guestName: guestName || 'Verified Guest',
-      guestAvatar: guestAvatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
+      guestAvatar: (guestAvatar && typeof guestAvatar === 'string' && !guestAvatar.includes('photo-1534528741775')) 
+        ? guestAvatar 
+        : `https://ui-avatars.com/api/?name=${encodeURIComponent(guestName || 'Guest')}&background=0284c7&color=fff&bold=true`,
       guestCountry: guestCountry || 'United States',
       rating: Number(rating) || 5,
       categories: categories || {

@@ -57,7 +57,21 @@ router.get('/', async (req, res) => {
   let dbMessages = [];
   try {
     if (mongoose.connection.readyState === 1) {
-      dbMessages = await Message.find(query)
+      // Auto-purge remnant mock Alice Johnson messages
+      await Message.deleteMany({
+        $or: [
+          { senderName: /Alice Johnson/i },
+          { recipientName: /Alice Johnson/i },
+          { senderId: 'alice' },
+          { recipientId: 'alice' }
+        ]
+      });
+
+      dbMessages = await Message.find({
+        ...query,
+        senderName: { $not: /Alice Johnson/i },
+        recipientName: { $not: /Alice Johnson/i }
+      })
         .select('id senderId senderName senderRole senderAvatar recipientId recipientName recipientRole text time read createdAt')
         .sort({ createdAt: -1 })
         .limit(maxLimit)
@@ -70,25 +84,8 @@ router.get('/', async (req, res) => {
     // safe fallback
   }
 
-  if (dbMessages && dbMessages.length > 0) {
-    return res.json(dbMessages);
-  }
-
-  // Fallback to local store with filtering
-  const localStore = getMessagesStore();
-  let filteredLocal = localStore;
-  if (userId) {
-    const cleanId = String(userId).trim();
-    filteredLocal = localStore.filter(m => {
-      if (role === 'manager') {
-        return m.senderId === cleanId || m.recipientId === cleanId || m.recipientId === 'partner1' || m.recipientId === 'manager' || m.recipientRole === 'manager';
-      }
-      return m.senderId === cleanId || m.recipientId === cleanId;
-    });
-  }
-
-  const limitedLocal = filteredLocal.slice(-maxLimit);
-  res.json(limitedLocal);
+  // Pure real MongoDB messages (no fake messages.json data)
+  res.json(dbMessages || []);
 });
 
 // POST send new message

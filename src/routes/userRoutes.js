@@ -7,6 +7,14 @@ import { connectDatabase } from '../config/db.js';
 
 const router = express.Router();
 
+// Helper to ensure clean, authentic avatar without mock faces
+const getCleanAvatar = (avatar, name = 'User') => {
+  if (avatar && typeof avatar === 'string' && !avatar.includes('photo-1534528741775') && (avatar.startsWith('http') || avatar.startsWith('data:image'))) {
+    return avatar;
+  }
+  return `https://ui-avatars.com/api/?name=${encodeURIComponent(name || 'User')}&background=0284c7&color=fff&bold=true`;
+};
+
 // GET all users (Live MongoDB with projection, pagination, and -password)
 router.get('/', async (req, res) => {
   res.setHeader('Cache-Control', 'private, no-cache, no-store, must-revalidate');
@@ -14,7 +22,10 @@ router.get('/', async (req, res) => {
   await connectDatabase();
   const { role, limit, page, search } = req.query;
 
-  const mongoFilter = {};
+  const mongoFilter = {
+    name: { $ne: 'Alice Johnson' },
+    id: { $ne: 'u_customer_demo' }
+  };
   if (role) mongoFilter.role = role;
   if (search && String(search).trim().length > 0) {
     const q = String(search).trim();
@@ -31,6 +42,14 @@ router.get('/', async (req, res) => {
   let users = [];
   try {
     if (mongoose.connection.readyState === 1) {
+      // Auto-purge any remnant mock Alice Johnson records from MongoDB
+      await User.deleteMany({
+        $or: [
+          { id: 'u_customer_demo' },
+          { name: 'Alice Johnson' }
+        ]
+      });
+
       let q = User.find(mongoFilter)
         .select(projection)
         .sort({ createdAt: -1 });
@@ -44,102 +63,67 @@ router.get('/', async (req, res) => {
     // safe fallback
   }
 
-  if (!users || users.length === 0) {
-    let localUsers = readData('users.json') || [];
-    if (role) localUsers = localUsers.filter(u => u.role === role);
-    if (search) {
-      const q = String(search).toLowerCase();
-      localUsers = localUsers.filter(u => (u.name && u.name.toLowerCase().includes(q)) || (u.email && u.email.toLowerCase().includes(q)));
-    }
+  // Sanitize avatars in real MongoDB user list
+  const sanitizedUsers = (users || []).map(u => ({
+    ...u,
+    avatar: getCleanAvatar(u.avatar, u.name)
+  }));
 
-    // Strip password
-    const safeUsers = localUsers.map(u => {
-      const { password, ...safeUser } = u;
-      return safeUser;
-    });
-
-    if (queryLimit > 0) {
-      return res.json(safeUsers.slice((queryPage - 1) * queryLimit, queryPage * queryLimit));
-    }
-    return res.json(safeUsers);
-  }
-
-  res.json(users);
+  res.json(sanitizedUsers);
 });
 
-// GET single user by ID or Role alias ('manager', 'customer', etc.)
+// GET single user by ID or Role alias ('manager', 'customer', etc.) from real MongoDB
 router.get('/:id', async (req, res) => {
   await connectDatabase();
   const requestedId = String(req.params.id || '').trim();
 
-  // 1. Alias handlers for instant host/guest resolution
-  if (requestedId === 'manager' || requestedId === 'partner' || requestedId === 'p1') {
-    return res.json({
-      id: 'manager',
-      name: 'Shariful Islam (Hotel Manager)',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80',
-      phone: '+1 (555) 000-1122',
-      email: 'manager@luxestay.com',
-      role: 'manager',
-      status: 'Property Host • Online'
-    });
-  }
-
-  if (requestedId === 'customer') {
-    return res.json({
-      id: 'customer',
-      name: 'Alice Johnson',
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
-      phone: '+1 (555) 234-5678',
-      email: 'customer@luxestay.com',
-      role: 'customer',
-      status: 'Guest • Online'
-    });
-  }
-
-  // 2. Query Live MongoDB Atlas
+  // 1. Query Live MongoDB Atlas for Real User
   let user = null;
   if (mongoose.connection.readyState === 1) {
     try {
-      user = await User.findOne({
-        $or: [
-          { id: requestedId },
-          { email: requestedId.toLowerCase() },
-          { _id: mongoose.isValidObjectId(requestedId) ? requestedId : null }
-        ]
-      }).select('-password').lean();
+      if (requestedId === 'manager' || requestedId === 'partner' || requestedId === 'p1') {
+        user = await User.findOne({ role: 'manager' }).select('-password').lean();
+      } else if (requestedId === 'admin') {
+        user = await User.findOne({ role: 'admin' }).select('-password').lean();
+      } else if (requestedId === 'customer') {
+        user = await User.findOne({ role: 'customer', name: { $ne: 'Alice Johnson' } }).select('-password').lean();
+      } else {
+        user = await User.findOne({
+          $or: [
+            { id: requestedId },
+            { email: requestedId.toLowerCase() },
+            { _id: mongoose.isValidObjectId(requestedId) ? requestedId : null }
+          ]
+        }).select('-password').lean();
+      }
     } catch (e) {}
-  }
-
-  // 3. Fallback to users.json
-  if (!user) {
-    const users = readData('users.json') || [];
-    user = users.find(u => u.id === requestedId || (u.email && u.email.toLowerCase() === requestedId.toLowerCase()));
   }
 
   if (user) {
     const { password, ...safeUser } = user;
+    const cleanAvatar = getCleanAvatar(safeUser.avatar, safeUser.name);
+
     return res.json({
       id: safeUser.id || safeUser._id?.toString() || requestedId,
       name: safeUser.name || 'LuxeStay Member',
-      avatar: safeUser.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
-      phone: safeUser.phone || '+1 (555) 000-1122',
-      email: safeUser.email || `${requestedId}@luxestay.com`,
+      avatar: cleanAvatar,
+      phone: safeUser.phone || '',
+      email: safeUser.email || '',
       role: safeUser.role || 'customer',
       country: safeUser.country || 'United States',
-      status: safeUser.role === 'manager' ? 'Property Host • Online' : 'Guest • Online'
+      status: safeUser.role === 'manager' ? 'Property Host • Online' : (safeUser.role === 'admin' ? 'Administrator • Online' : 'Guest • Online')
     });
   }
 
-  // Return fallback profile instead of 404
+  // Clean fallback without any fake face
   res.json({
     id: requestedId,
-    name: 'Verified User',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
-    phone: '+1 (555) 000-1122',
+    name: 'Verified Guest',
+    avatar: getCleanAvatar('', 'Verified Guest'),
+    phone: '',
     email: `${requestedId}@luxestay.com`,
     role: 'customer',
-    status: 'Member • Online'
+    status: 'Guest • Online'
   });
 });
 
@@ -155,7 +139,7 @@ router.post('/', async (req, res) => {
     phone: req.body.phone || '+1 (555) 000-0000',
     role: req.body.role || 'customer',
     country: req.body.country || 'United States',
-    avatar: req.body.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
+    avatar: getCleanAvatar(req.body.avatar, req.body.name),
     memberSince: new Date().getFullYear().toString()
   };
 

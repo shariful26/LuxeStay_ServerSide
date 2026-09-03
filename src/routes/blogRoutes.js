@@ -53,7 +53,9 @@ router.post('/', async (req, res) => {
     title: req.body.title || 'New Travel Story',
     slug: (req.body.title || 'new-travel-story').toLowerCase().replace(/[^a-z0-9]+/g, '-'),
     author: req.body.author || 'LuxeStay Editorial',
-    authorAvatar: req.body.authorAvatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80',
+    authorAvatar: (req.body.authorAvatar && typeof req.body.authorAvatar === 'string' && !req.body.authorAvatar.includes('photo-1534528741775'))
+      ? req.body.authorAvatar
+      : `https://ui-avatars.com/api/?name=${encodeURIComponent(req.body.author || 'LuxeStay')}&background=0284c7&color=fff&bold=true`,
     date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
     category: req.body.category || 'Luxury Travel',
     image: req.body.image || 'https://images.unsplash.com/photo-1540541338287-41700207dee6?auto=format&fit=crop&w=1200&q=80',
